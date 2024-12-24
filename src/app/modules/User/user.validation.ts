@@ -1,44 +1,35 @@
+import { UserAccountStatus, UserCreatedBy, UserRole } from "@prisma/client";
 import { z } from "zod";
 
 
-
-const CreateUserValidationSchema = z.object({
+const RegisterUserValidationSchema = z.object({
   email: z
-    .string()
-    .email("Invalid email address")
-    .min(1, "Email is required"),  // Ensure email is provided and is valid
-
-  name: z
-    .string()
-    .min(1, "Name is required"),  // Ensure name is non-empty
+    .string({ required_error: "Email is required" })
+    .email({ message: "Invalid email address" }),
 
   password: z
-    .string()
-    .min(8, "Password must be at least 8 characters long")
-    .nonempty("Password is required"),
-
+    .string({ required_error: "Password is required" })
+    .min(8, { message: "Password must be at least 8 characters long" })
 });
-
-export { CreateUserValidationSchema };
-;
 
 const UserLoginValidationSchema = z.object({
-  email: z.string().email().nonempty("Email is required"),
+  email: z
+    .string({ required_error: "Email is required" })
+    .email({ message: "Invalid email address" }),
   password: z
-    .string()
-    .min(8, "Password must be at least 8 characters long")
-    .nonempty("Password is required"),
+    .string({ required_error: "Password is required" })
+    .min(8, { message: "Password must be at least 8 characters long" })
 });
 
-const userUpdateSchema = z.object({
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  promoCode: z.string().optional(),
-  profession: z.string().optional(),
+const UserUpdateValidationSchema = z.object({
+  role: z.enum([UserRole.Admin, UserRole.Customer, UserRole.Driver]).optional(),
+  phoneNumber: z.string().optional(),
+  accountStatus: z.enum([UserAccountStatus.Pending, UserAccountStatus.Processing, UserAccountStatus.Verified]).optional(),
+  createdBy: z.enum([UserCreatedBy.Manual, UserCreatedBy.Social]).optional(),
 });
 
 export const UserValidation = {
-  CreateUserValidationSchema,
+  RegisterUserValidationSchema,
   UserLoginValidationSchema,
-  userUpdateSchema,
+  UserUpdateValidationSchema,
 };

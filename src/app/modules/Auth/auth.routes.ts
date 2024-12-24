@@ -11,18 +11,32 @@ const router = express.Router();
 // user login route
 router.post(
   "/login",
-  validateRequest(UserValidation.UserLoginValidationSchema),
+  validateRequest(authValidation.LoginValidationSchema),
   AuthController.loginUser
 );
 
+// user register route
+router.post(
+  '/register',
+  validateRequest(authValidation.RegisterValidationSchema),
+  AuthController.registerUser
+)
+
+router.post(
+  '/send-otp',
+  validateRequest(authValidation.SendOtpValidationSchema),
+  AuthController.sendOtp
+)
+
+router.post(
+  '/verify-otp',
+  auth(),
+  validateRequest(authValidation.VerifyOtpValidationSchema),
+  AuthController.verifyOtp
+)
+
 // user logout route
 router.post("/logout", AuthController.logoutUser);
-
-router.get(
-  "/profile",
-  auth(UserRole.ADMIN, UserRole.USER),
-  AuthController.getMyProfile
-);
 
 router.put(
   "/change-password",
@@ -30,7 +44,6 @@ router.put(
   validateRequest(authValidation.changePasswordValidationSchema),
   AuthController.changePassword
 );
-
 
 router.post(
   '/forgot-password',
