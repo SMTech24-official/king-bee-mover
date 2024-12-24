@@ -5,15 +5,15 @@ import prisma from "../../../shared/prisma";
 import * as bcrypt from "bcrypt";
 import ApiError from "../../../errors/ApiErrors";
 import emailSender from "./emailSender";
-import { UserStatus } from "@prisma/client";
-import httpStatus from "http-status";
+import httpStatus from "http-status"; 
+
 
 // user login
 const loginUser = async (payload: { email: string; password: string }) => {
   const userData = await prisma.user.findUnique({
     where: {
       email: payload.email,
-    },
+    }
   });
 
   if (!userData?.email) {
@@ -30,6 +30,7 @@ const loginUser = async (payload: { email: string; password: string }) => {
   if (!isCorrectPassword) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Password incorrect!");
   }
+
   const accessToken = jwtHelpers.generateToken(
     {
       id: userData.id,
@@ -42,6 +43,31 @@ const loginUser = async (payload: { email: string; password: string }) => {
 
   return { token: accessToken };
 };
+
+// user register
+const registerUser = async (payload: { email: string; password: string; phoneNumber: string; }) => {
+  const user = await prisma.user.findFirst({
+    where:{
+      OR:[
+        {email:payload.email},
+        {phoneNumber:payload.phoneNumber}
+      ]
+    }
+  })
+
+  if(user){
+    throw new ApiError(httpStatus.BAD_REQUEST,`User already exists with this email ${payload.email} or phone number ${payload.phoneNumber}`);
+  }
+
+  const hashedPassword = await bcrypt.hash(payload.password, config.bcrypt_salt_rounds as string);
+  const userData = await prisma.user.create({
+    data:{
+      ...payload,
+      password:hashedPassword
+    }
+  });
+  return userData;
+}
 
 // get user profile
 const getMyProfile = async (userToken: string) => {
@@ -56,10 +82,7 @@ const getMyProfile = async (userToken: string) => {
     },
     select: {
       id: true,
-      name: true,
-      username: true,
       email: true,
-      profileImage: true,
       phoneNumber: true,
       createdAt: true,
       updatedAt: true,
@@ -70,7 +93,6 @@ const getMyProfile = async (userToken: string) => {
 };
 
 // change password
-
 const changePassword = async (
   userToken: string,
   newPassword: string,
@@ -123,7 +145,7 @@ const forgotPassword = async (payload: { email: string }) => {
 
   const resetPassLink =
     config.reset_pass_link + `?userId=${userData.id}&token=${resetPassToken}`;
- 
+
 
   await emailSender(
     "Reset Your Password",
@@ -144,7 +166,6 @@ const forgotPassword = async (payload: { email: string }) => {
           
           <p>Thank you,<br>Dream 2 Drive</p>
 </div>
-
       `
   );
   return { message: "Reset password link sent via your email successfully" };
@@ -184,6 +205,7 @@ const resetPassword = async (token: string, payload: { password: string }) => {
 
 export const AuthServices = {
   loginUser,
+  registerUser,
   getMyProfile,
   changePassword,
   forgotPassword,

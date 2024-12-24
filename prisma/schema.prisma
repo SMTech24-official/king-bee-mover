@@ -8,30 +8,185 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  id            String      @id @default(uuid()) @map("_id")
+  email         String      @unique
+  password      String
+  phoneNumber   String      @unique
+  role          UserRole      @default(Customer) // Admin, Customer, Driver
+  createdBy     UserCreatedBy @default(Manual)   // Social, Manual
+  accountStatus UserAccountStatus @default(Pending)  // Pending, Processing, Verified
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  drivers Driver[]
+  customers Customer[]
+}
+
+// Driver model
+model Driver {
+  id                String     @id @default(uuid()) @map("_id")
+  userId            String     @unique
+  name              String
+  profileImage      String
+  nationalIdFront   String
+  nationalIdBack    String
+  licenseFront      String
+  licenseBack       String
+  insurance         Boolean   @default(false)
+  insuranceFront    String?
+  insuranceBack     String?
+
+  // Relationships
+  user              User       @relation(fields: [userId], references: [id])
+
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  trips             Trip[]
+  driverTripApplications DriverTripApplication[]
+  payments          Payment[]
+}
+
+// Customer model
+model Customer {
+  id           String     @id @default(uuid()) @map("_id")
+  userId       String     @unique
   name         String
-  username     String?     @unique
-  email        String     @unique
-  phoneNumber  String?
-  profileImage String?
-  password     String
-  role         UserRole   @default(USER)
-  status       UserStatus @default(ACTIVE)
+  profileImage String
+  companyName  String?
+
+  // Relationships
+  user         User       @relation(fields: [userId], references: [id])
+
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  @@map("Users")
+  trips        Trip[]
+  payments     Payment[]
+}
+
+// Trip model
+model Trip {
+  id                String     @id @default(uuid()) @map("_id")
+  loadLocation      String
+  unloadLocation    String
+  customerId        String
+  truckId           String 
+  truck             Truck    @relation(fields: [truckId], references: [id])
+  date              DateTime
+  time              String
+  productType       String
+  productDetails    String?
+  paymentMethodType PaymentMethodType @default(Online) // Online or Offline
+  totalCost         Float
+  distance          Float
+  tripStatus        TripStatus @default(Pending) // Completed, Pending, Published, Cancelled, Confirmed
+  assignedDriverId  String?
+  tags              String[]
+
+  // Relationships
+  customer          Customer   @relation(fields: [customerId], references: [id])
+  driver            Driver?    @relation(fields: [assignedDriverId], references: [id])
+
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  driverTripApplications DriverTripApplication[]
+  payments          Payment[]
+}
+
+// Truck model
+model Truck {
+  id                String     @id @default(uuid()) @map("_id")
+  name              String
+  image             String
+  length            Float
+  width             Float
+  height            Float 
+  type              String
+  capacity          Float
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  trips             Trip[]
+}
+
+// DriverTripApplication model
+model DriverTripApplication {
+  id                String     @id @default(uuid()) @map("_id")
+  tripId            String
+  driverId          String
+
+  // Relationships
+  trip              Trip       @relation(fields: [tripId], references: [id])
+  driver            Driver     @relation(fields: [driverId], references: [id])
+
+  status            DriverTripApplicationStatus     @default(Applied) // Applied, Assigned, Rejected, Completed
+
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+}
+
+// Payment model
+model Payment {
+  id                String     @id @default(uuid()) @map("_id")
+  customerId        String?
+  driverId          String?
+  tripId            String
+  amount            Float
+  paymentMethod     String     // Online or Offline
+  status            String     // Pending, Completed, Failed
+  transactionId     String?
+  timestamp         DateTime   @default(now())
+
+  // Relationships
+  customer          Customer?  @relation(fields: [customerId], references: [id])
+  driver            Driver?    @relation(fields: [driverId], references: [id])
+  trip              Trip       @relation(fields: [tripId], references: [id])
+
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+}
+
+enum DriverTripApplicationStatus {
+  Applied
+  Assigned
+  Rejected
+  Completed
 }
 
 enum UserRole {
-  ADMIN
-  TEACHER
-  SUPER_ADMIN
-  USER
+  Admin
+  Customer
+  Driver
+}
+
+enum PaymentMethodType {
+  Online
+  Offline
 }
 
 enum UserStatus {
-  ACTIVE
-  INACTIVE
-  BLOCKED
+  Pending
+  Processing
+  Verified
+}
+
+enum UserCreatedBy {
+  Social
+  Manual
+}
+
+enum UserAccountStatus {
+  Pending
+  Processing
+  Verified
+}
+
+enum TripStatus {
+  Completed
+  Pending
+  Published
+  Cancelled
+  Confirmed
 }

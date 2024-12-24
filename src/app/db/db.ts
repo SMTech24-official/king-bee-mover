@@ -11,7 +11,7 @@ export const initiateSuperAdmin = async () => {
     role: UserRole.SUPER_ADMIN,
   };
 
-  const isExistUser = await prisma.user.findUnique({
+  const isExistUser = !!await prisma.user.findUnique({
     where: {
       username: payload.username,
       email: payload.email,

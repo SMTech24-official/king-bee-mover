@@ -37,12 +37,14 @@ const GlobalErrorHandler = (
     message = err.message;
     errorSources = [{ type: "ApiError", details: err.message }];
   }
+  
   // handle prisma client validation errors
   else if (err instanceof Prisma.PrismaClientValidationError) {
     statusCode = httpStatus.BAD_REQUEST;
     message = parsePrismaValidationError(err.message);
     errorSources.push("Prisma Client Validation Error");
   }
+  
   // Prisma Client Initialization Error
   else if (err instanceof Prisma.PrismaClientInitializationError) {
     statusCode = httpStatus.INTERNAL_SERVER_ERROR;
@@ -93,3 +95,4 @@ const GlobalErrorHandler = (
 };
 
 export default GlobalErrorHandler;
+
