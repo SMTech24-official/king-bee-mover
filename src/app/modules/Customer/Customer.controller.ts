@@ -4,10 +4,11 @@ import httpStatus from "http-status";
 import sendResponse from "../../../shared/sendResponse";
 import { CustomerService } from "./Customer.service";
 import pick from "../../../shared/pick";
+import catchAsync from "../../../shared/catchAsync";
 
 
 // create a customer  
-const createCustomer = async (req: Request, res: Response, next: NextFunction) => {
+const createCustomer = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const file = (req.file || {}) as Express.Multer.File;
   const result = await CustomerService.createCustomer(req.body, file as Express.Multer.File);
   sendResponse(res, {
@@ -16,10 +17,10 @@ const createCustomer = async (req: Request, res: Response, next: NextFunction) =
     message: 'Customer created successfully',
     data: result,
   });    
-};
+});
 
 // get all customers
-const getAllCustomer = async (req: Request, res: Response, next: NextFunction) => {
+const getAllCustomer = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
 
   const result = await CustomerService.getAllCustomer(options);
@@ -29,10 +30,10 @@ const getAllCustomer = async (req: Request, res: Response, next: NextFunction) =
     message: 'All customers fetched successfully',
     data: result,
   });
-};
+});
 
 // get a customer
-const getCustomer = async (req: Request, res: Response, next: NextFunction) => {
+const getCustomer = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   const result = await CustomerService.getCustomer(id);
   sendResponse(res, {
@@ -41,10 +42,10 @@ const getCustomer = async (req: Request, res: Response, next: NextFunction) => {
     message: 'Customer fetched successfully',
     data: result,
   });
-};
+});
 
 // update a customer
-const updateCustomer = async (req: Request, res: Response, next: NextFunction) => {
+const updateCustomer = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   const customerData = req.body;
   const result = await CustomerService.updateCustomer(id, customerData);
@@ -54,9 +55,10 @@ const updateCustomer = async (req: Request, res: Response, next: NextFunction) =
     message: 'Customer updated successfully',
     data: result,
   });
-};
+});
 
-const deleteCustomer = async (req: Request, res: Response, next: NextFunction) => {
+// delete a customer
+const deleteCustomer = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   await CustomerService.deleteCustomer(id);
   sendResponse(res, {
@@ -65,11 +67,7 @@ const deleteCustomer = async (req: Request, res: Response, next: NextFunction) =
     message: 'Customer deleted successfully',
     data: null,
   });
-};
-
-
-
-
+});
 
 
 export const CustomerController = {

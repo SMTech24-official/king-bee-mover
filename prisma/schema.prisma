@@ -14,7 +14,6 @@ model User {
   phoneNumber   String?      @unique
   role          UserRole      @default(Customer) // Admin, Customer, Driver
   createdBy     UserCreatedBy @default(Manual)   // Social, Manual
-  accountStatus UserAccountStatus @default(Pending)  // Pending, Processing, Verified
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -35,6 +34,7 @@ model Driver {
   insurance         Boolean   @default(false)
   insuranceFront    String?
   insuranceBack     String?
+  accountStatus UserAccountStatus @default(Pending)  // Pending, Processing, Verified
 
   // Relationships
   user              User       @relation(fields: [userId], references: [id])
@@ -54,6 +54,7 @@ model Customer {
   name         String
   profileImage String
   companyName  String?
+  accountStatus UserAccountStatus @default(Pending)  // Pending, Processing, Verified
 
   // Relationships
   user         User       @relation(fields: [userId], references: [id])

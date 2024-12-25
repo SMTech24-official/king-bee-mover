@@ -1,6 +1,6 @@
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
-import { IUser, IUserFilterRequest } from "./user.interface";
+import {  IUserFilterRequest } from "./user.interface";
 import * as bcrypt from "bcrypt";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import { paginationHelper } from "../../../helpars/paginationHelper";
@@ -112,65 +112,23 @@ const getUsersFromDb = async (
   };
 };
 
-// update profile by user won profile uisng token or email and id
-const updateProfile = async (user: IUser, payload: User) => {
+// update user information specialy user role
+const updateUser = async (id: string, payload: Partial<Omit<User, "id"| "createdAt"| "updatedAt" | "password" >>) => {
   const userInfo = await prisma.user.findUnique({
     where: {
-      email: user.email,
-      id: user.id,
+      id: id,
     },
   });
 
   if (!userInfo) {
     throw new ApiError(404, "User not found");
   }
-
-  // Update the user profile with the new information
+ 
   const result = await prisma.user.update({
-    where: {
-      email: userInfo.email,
-    },
-    data: payload,
-    select: {
-      id: true,  
-      email: true, 
-      phoneNumber: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
-
-  if (!result)
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to update user profile"
-    );
-
-  return result;
-};
-
-// update user data into database by id fir admin
-const updateUserIntoDb = async (payload: IUser, id: string) => {
-  const userInfo = await prisma.user.findUniqueOrThrow({
     where: {
       id: id,
     },
-  });
-  if (!userInfo)
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found with id: " + id);
-
-  const result = await prisma.user.update({
-    where: {
-      id: userInfo.id,
-    },
     data: payload,
-    select: {
-      id: true,  
-      email: true, 
-      role: true,
-      createdAt: true,
-      updatedAt: true,
-    },
   });
 
   if (!result)
@@ -182,9 +140,9 @@ const updateUserIntoDb = async (payload: IUser, id: string) => {
   return result;
 };
 
+ 
 export const userService = {
   createUserIntoDb,
   getUsersFromDb,
-  updateProfile,
-  updateUserIntoDb,
+  updateUser 
 };

@@ -1,4 +1,5 @@
 // Customer.validation: Module file for the Customer.validation functionality.
+import { UserAccountStatus } from "@prisma/client";
 import { z } from "zod";
 
 const createCustomerSchema = z.object({
@@ -16,6 +17,7 @@ const updateCustomerSchema = z.object({
     name: z.string().optional(),
     companyName: z.string().optional(),
     profileImage: z.string().optional(),
+    accountStatus: z.enum([UserAccountStatus.Pending, UserAccountStatus.Processing, UserAccountStatus.Verified]).optional(),
 });
 
 export const CustomerValidation = {
