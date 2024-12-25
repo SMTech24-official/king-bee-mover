@@ -28,10 +28,10 @@ model Driver {
   userId            String     @unique
   name              String
   profileImage      String
-  nationalIdFront   String
-  nationalIdBack    String
-  licenseFront      String
-  licenseBack       String
+  nationalIdFront   String?
+  nationalIdBack    String?
+  licenseFront      String?
+  licenseBack       String?
   insurance         Boolean   @default(false)
   insuranceFront    String?
   insuranceBack     String?
