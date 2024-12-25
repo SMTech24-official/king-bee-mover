@@ -59,9 +59,9 @@ const registerUser = async (payload: { email: string; password: string; phoneNum
 
   if(user){
     throw new ApiError(httpStatus.BAD_REQUEST,`User already exists with this email ${payload.email} or phone number ${payload.phoneNumber}`);
-  }
+  } 
 
-  const hashedPassword = await bcrypt.hash(payload.password, config.bcrypt_salt_rounds as string);
+  const hashedPassword = await bcrypt.hash(payload.password, Number(config.bcrypt_salt_rounds));
 
   const userData = await prisma.user.create({
     data:{
@@ -70,9 +70,7 @@ const registerUser = async (payload: { email: string; password: string; phoneNum
     },
   });
 
-  const userDataExceptPassword = removeObjectProperty(userData, "password");
-
-  console.log("userDataWithoutPassword", userDataExceptPassword);
+  const userDataExceptPassword = removeObjectProperty(userData, "password");  
 
   const accessToken = jwtHelpers.generateToken(
     {
@@ -83,7 +81,7 @@ const registerUser = async (payload: { email: string; password: string; phoneNum
     config.jwt.jwt_secret as Secret,
     config.jwt.expires_in as string
   );
-  return {data:userDataExceptPassword,token:accessToken};
+  return {data: userDataExceptPassword,token:accessToken};
 }
 
 // change password

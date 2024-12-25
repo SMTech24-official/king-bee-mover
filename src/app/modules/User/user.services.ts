@@ -13,7 +13,7 @@ import httpStatus from "http-status";
 const createUserIntoDb = async (payload: User) => {
   const existingUser = await prisma.user.findFirst({
     where: {
-      OR: [{ email: payload.email }, { username: payload.username }],
+      OR: [{ email: payload.email } ],
     },
   });
 
@@ -23,13 +23,7 @@ const createUserIntoDb = async (payload: User) => {
         400,
         `User with this email ${payload.email} already exists`
       );
-    }
-    if (existingUser.username === payload.username) {
-      throw new ApiError(
-        400,
-        `User with this username ${payload.username} already exists`
-      );
-    }
+    } 
   }
   const hashedPassword: string = await bcrypt.hash(
     payload.password,
@@ -39,9 +33,7 @@ const createUserIntoDb = async (payload: User) => {
   const result = await prisma.user.create({
     data: { ...payload, password: hashedPassword },
     select: {
-      id: true,
-      name: true,
-      username: true,
+      id: true, 
       email: true,
       role: true,
       createdAt: true,
@@ -96,11 +88,8 @@ const getUsersFromDb = async (
             createdAt: "desc",
           },
     select: {
-      id: true,
-      name: true,
-      username: true,
-      email: true,
-      profileImage: true,
+      id: true, 
+      email: true, 
       role: true,
       createdAt: true,
       updatedAt: true,
@@ -141,21 +130,10 @@ const updateProfile = async (user: IUser, payload: User) => {
     where: {
       email: userInfo.email,
     },
-    data: {
-      name: payload.name || userInfo.name,
-      username: payload.username || userInfo.username,
-      email: payload.email || userInfo.email,
-      profileImage: payload.profileImage || userInfo.profileImage,
-      phoneNumber: payload.phoneNumber || userInfo.phoneNumber,
-    },
+    data: payload,
     select: {
-      id: true,
-      name: true,
-      username: true,
-
-      
-      email: true,
-      profileImage: true,
+      id: true,  
+      email: true, 
       phoneNumber: true,
       createdAt: true,
       updatedAt: true,
@@ -187,11 +165,8 @@ const updateUserIntoDb = async (payload: IUser, id: string) => {
     },
     data: payload,
     select: {
-      id: true,
-      name: true,
-      username: true,
-      email: true,
-      profileImage: true,
+      id: true,  
+      email: true, 
       role: true,
       createdAt: true,
       updatedAt: true,

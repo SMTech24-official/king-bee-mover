@@ -55,6 +55,7 @@ const getTrucksFromDb = async (
     const result = await prisma.truck.findMany({
         where: whereConditons,
         skip,
+        take: limit,
         orderBy:
             options.sortBy && options.sortOrder
                 ? {

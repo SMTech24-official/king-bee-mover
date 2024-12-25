@@ -20,13 +20,12 @@ const registerUser = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthServices.registerUser(req.body);
   res.cookie("token", result.token, { httpOnly: true }); 
   sendResponse(res, {
-    statusCode: httpStatus.OK,
+    statusCode: httpStatus.CREATED,
     success: true,
     message: "User registered successfully",
     data: result,
   });
 });
-
 
 const logoutUser = catchAsync(async (req: Request, res: Response) => {
   // Clear the token cookie
