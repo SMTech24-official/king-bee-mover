@@ -87,6 +87,7 @@ model Trip {
   paymentMethodType PaymentMethodType @default(Online) // Online or Offline
   totalCost         Float
   distance          Float
+  weight            Float
   tripStatus        TripStatus @default(Pending) // Completed, Pending, Published, Cancelled, Confirmed
   assignedDriverId  String?
   tags              String[]

@@ -40,63 +40,6 @@ const createDriver = async (data: Driver, file: Express.Multer.File) => {
     return driver;
 }
 
-const updateDriver = async (id: string, data: Partial<Omit<Driver, "userId" | "id">>) => {
-
-    const isDriverExist = await prisma.driver.findUnique({
-        where: { id },
-    });
-
-    if(!isDriverExist){
-        throw new ApiError(httpStatus.NOT_FOUND, "Driver not found");
-    }
-
-    const driver = await prisma.driver.update({
-        where: { id },
-        data,
-    });
-    return driver;
-}
-
-const deleteDriver = async (id: string) => { 
-    const isDriverExist = await prisma.driver.findUnique({
-        where: {
-            id: id,
-        },
-    });
-
-    if(!isDriverExist){
-        throw new ApiError(httpStatus.NOT_FOUND, "Driver not found");
-    }
-    
-    // delete from driver and user table
-    await prisma.$transaction(async (tx) => {
-        // delete driver
-        await tx.driver.delete({
-            where: { id },
-        });
-
-        // delete user
-        await tx.user.delete({
-            where: { id: isDriverExist.userId },
-        });
-    });
-}
-
-const getDriver = async (id: string) => {
-
-    const isDriverExist = await prisma.driver.findUnique({
-        where: { id },
-    });
-
-    if(!isDriverExist){
-        throw new ApiError(httpStatus.NOT_FOUND, "Driver not found");
-    }   
-
-    const driver = await prisma.driver.findUnique({
-        where: { id },
-    });
-    return driver;
-}
 
 const getAllDriver = async (options: IPaginationOptions, params:IDriverSearchFields ) => {
     const { page, limit, skip } = paginationHelper.calculatePagination(options);
@@ -156,6 +99,65 @@ const getAllDriver = async (options: IPaginationOptions, params:IDriverSearchFie
         data: result,
     };
 }
+
+const updateDriver = async (id: string, data: Partial<Omit<Driver, "userId" | "id">>) => {
+
+    const isDriverExist = await prisma.driver.findUnique({
+        where: { id },
+    });
+
+    if(!isDriverExist){
+        throw new ApiError(httpStatus.NOT_FOUND, "Driver not found");
+    }
+
+    const driver = await prisma.driver.update({
+        where: { id },
+        data,
+    });
+    return driver;
+}
+
+const deleteDriver = async (id: string) => { 
+    const isDriverExist = await prisma.driver.findUnique({
+        where: {
+            id: id,
+        },
+    });
+
+    if(!isDriverExist){
+        throw new ApiError(httpStatus.NOT_FOUND, "Driver not found");
+    }
+    
+    // delete from driver and user table
+    await prisma.$transaction(async (tx) => {
+        // delete driver
+        await tx.driver.delete({
+            where: { id },
+        });
+
+        // delete user
+        await tx.user.delete({
+            where: { id: isDriverExist.userId },
+        });
+    });
+}
+
+const getDriver = async (id: string) => {
+
+    const isDriverExist = await prisma.driver.findUnique({
+        where: { id },
+    });
+
+    if(!isDriverExist){
+        throw new ApiError(httpStatus.NOT_FOUND, "Driver not found");
+    }   
+
+    const driver = await prisma.driver.findUnique({
+        where: { id },
+    });
+    return driver;
+}
+
 
 // next day will be complete the service function
 const verifyDriver = async (id: string, files: Express.Multer.File[]) => {

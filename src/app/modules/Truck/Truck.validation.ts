@@ -37,10 +37,11 @@ const updateTruckSchema = z.object({
     }).optional(),
     type: z.string().optional(),
     capacity: z.number().optional(),
+}).strict({
+    message: "Invalid request body",
 });
-
 
 export const TruckValidation = {
     addTruckSchema,
     updateTruckSchema,
-}; 
+};

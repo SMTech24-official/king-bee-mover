@@ -5,6 +5,7 @@ import { fileUploader } from '../../../helpars/fileUploader';
 import { Request, Response, NextFunction } from 'express';
 import { DriverValidation } from './Driver.validation';
 import auth from '../../middlewares/auth';
+import validateRequest from '../../middlewares/validateRequest';
 
 const router = express.Router();
 
@@ -26,8 +27,6 @@ router.post("/verify-driver",
     DriverController.verifyDriver
 );
 
-
-
 // *!get all driver
 router.get('/', 
     // auth(UserRole.Admin),
@@ -43,6 +42,7 @@ router.get('/:id',
 // *!update a driver
 router.patch('/:id', 
     // auth(UserRole.Admin, UserRole.Driver),
+    validateRequest(DriverValidation.updateDriverSchema),
     DriverController.updateDriver
 );
 

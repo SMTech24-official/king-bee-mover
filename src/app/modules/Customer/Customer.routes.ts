@@ -4,6 +4,7 @@ import { CustomerController } from './Customer.controller';
 import { UserRole } from '@prisma/client';
 import { fileUploader } from '../../../helpars/fileUploader';
 import { CustomerValidation } from './Customer.validation'; 
+import validateRequest from '../../middlewares/validateRequest';
 
 const router = express.Router();
 
@@ -32,6 +33,7 @@ router.get('/:id',
 // update a customer
 router.patch('/:id', 
     // auth(UserRole.Admin, UserRole.Customer), 
+    validateRequest(CustomerValidation.updateCustomerSchema),
     CustomerController.updateCustomer
 );
 

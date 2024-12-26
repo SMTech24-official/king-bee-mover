@@ -6,8 +6,9 @@ import httpStatus from "http-status";
 import { TruckService } from "./Truck.service";
 import pick from "../../../shared/pick";
 import { truckFilterableFields } from "./Truck.constant";
+import catchAsync from "../../../shared/catchAsync";
 
-const AddTruck = async (req: Request, res: Response, _next: NextFunction) => {
+const AddTruck = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
     if (!req.file) {
         throw new Error('File is required');
     }
@@ -19,10 +20,10 @@ const AddTruck = async (req: Request, res: Response, _next: NextFunction) => {
         message: 'Truck Added successfully',
         data: result,
     });
-};
+});
 
 // get all trucks
-const GetAllTrucks = async (req: Request, res: Response) => {
+const GetAllTrucks = catchAsync(async (req: Request, res: Response) => {
     const filters = pick(req.query, truckFilterableFields);
     const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
 
@@ -33,10 +34,10 @@ const GetAllTrucks = async (req: Request, res: Response) => {
         message: 'All trucks fetched successfully',
         data: result,
     });
-};
+});
 
 // get truck by id
-const GetTruckById = async (req: Request, res: Response) => {
+const GetTruckById = catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
     const result = await TruckService.GetTruckById(id);
     sendResponse(res, {
@@ -45,10 +46,10 @@ const GetTruckById = async (req: Request, res: Response) => {
         message: 'Truck fetched successfully',
         data: result,
     });
-};
+});
 
 // update truck
-const UpdateTruck = async (req: Request, res: Response) => {
+const UpdateTruck = catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
     const truckData = req.body;
     const result = await TruckService.UpdateTruck(id, truckData);
@@ -58,9 +59,9 @@ const UpdateTruck = async (req: Request, res: Response) => {
         message: 'Truck updated successfully',
         data: result,
     });
-};
+});
 
-const DeleteTruck = async (req: Request, res: Response) => {
+const DeleteTruck = catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
     await TruckService.DeleteTruck(id);
     sendResponse(res, {
@@ -69,7 +70,7 @@ const DeleteTruck = async (req: Request, res: Response) => {
         message: 'Truck deleted successfully',
         data:null
     });
-};
+})  ;
 
 export const TruckController = {
     AddTruck,

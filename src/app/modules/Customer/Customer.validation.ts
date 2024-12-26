@@ -21,6 +21,8 @@ const updateCustomerSchema = z.object({
         UserAccountStatus.Pending,
         UserAccountStatus.Processing,
         UserAccountStatus.Verified]).optional(),
+}).strict({
+    message: "Invalid request body",
 });
 
 export const CustomerValidation = {

@@ -4,16 +4,19 @@ import { Router } from "express";
 import { TripController } from "./Trip.controller";
 import { UserRole } from "@prisma/client";
 import auth from "../../middlewares/auth";
+import { TripValidation } from "./Trip.validation";
+import validateRequest from "../../middlewares/validateRequest";
 
 const router = Router();
 
 router.post("/",
-    auth(UserRole.Customer),
+    // auth(UserRole.Customer),
+    validateRequest(TripValidation.createTripValidationSchema),
     TripController.createTrip
 );
 
 router.get("/", 
-    auth(UserRole.Admin, UserRole.Customer, UserRole.Driver),
+    // auth(UserRole.Admin, UserRole.Customer, UserRole.Driver),
     TripController.getAllTrip
 );
 

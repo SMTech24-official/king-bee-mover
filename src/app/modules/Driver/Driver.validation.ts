@@ -22,6 +22,8 @@ const updateDriverSchema = z.object({
     insuranceFront: z.string().optional(),
     insuranceBack: z.string().optional(),
     accountStatus: z.enum([UserAccountStatus.Pending, UserAccountStatus.Processing, UserAccountStatus.Verified]).optional(),
+}).strict({
+    message: "Invalid request body",
 });
 
 
