@@ -1,3 +1,4 @@
+import { UserRole } from "@prisma/client";
 import { z } from "zod";
 
 // *!register user zod schema
@@ -12,6 +13,12 @@ const RegisterValidationSchema = z.object({
   }).min(8, {
     message: "Password must be at least 8 characters"
   }),
+  phoneNumber: z.string({
+    required_error: "Phone number is required"
+  }).min(10, {
+    message: "Phone number must be at least 10 characters"
+  }),
+  role: z.enum([UserRole.Customer, UserRole.Driver, UserRole.Admin] as [string, ...string[]]),
 });
 
 // *!login user zod schema
@@ -59,7 +66,6 @@ const changePasswordValidationSchema = z.object({
   oldPassword: z.string().min(8),
   newPassword: z.string().min(8),
 });
-
 
 export const authValidation = {
   RegisterValidationSchema,

@@ -11,7 +11,7 @@ model User {
   id            String      @id @default(uuid()) @map("_id")
   email         String      @unique
   password      String
-  phoneNumber   String?      @unique
+  phoneNumber   String      @unique
   role          UserRole      @default(Customer) // Admin, Customer, Driver
   createdBy     UserCreatedBy @default(Manual)   // Social, Manual
   createdAt     DateTime    @default(now())
@@ -19,6 +19,8 @@ model User {
 
   drivers Driver[]
   customers Customer[]
+
+  @@map("users")
 }
 
 // Driver model
@@ -45,6 +47,8 @@ model Driver {
   trips             Trip[]
   driverTripApplications DriverTripApplication[]
   payments          Payment[]
+
+  @@map("drivers")
 }
 
 // Customer model
@@ -54,7 +58,7 @@ model Customer {
   name         String
   profileImage String
   companyName  String?
-  accountStatus UserAccountStatus @default(Pending)  // Pending, Processing, Verified
+  accountStatus UserAccountStatus @default(Verified)  // Pending, Processing, Verified
 
   // Relationships
   user         User       @relation(fields: [userId], references: [id])
@@ -64,6 +68,8 @@ model Customer {
 
   trips        Trip[]
   payments     Payment[]
+
+  @@map("customers")
 }
 
 // Trip model
@@ -94,6 +100,8 @@ model Trip {
 
   driverTripApplications DriverTripApplication[]
   payments          Payment[]
+
+  @@map("trips")
 }
 
 // Truck model
@@ -110,6 +118,8 @@ model Truck {
   updatedAt         DateTime   @updatedAt
 
   trips             Trip[]
+
+  @@map("trucks")
 }
 
 // DriverTripApplication model
@@ -126,6 +136,8 @@ model DriverTripApplication {
 
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
+
+  @@map("driver_trip_applications")
 }
 
 // Payment model
@@ -147,6 +159,8 @@ model Payment {
 
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
+
+  @@map("payments")
 }
 
 enum DriverTripApplicationStatus {

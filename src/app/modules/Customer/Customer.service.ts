@@ -5,7 +5,6 @@ import prisma from "../../../shared/prisma";
 import httpStatus from "http-status";
 import ApiError from "../../../errors/ApiErrors";
 import { fileUploader } from "../../../helpars/fileUploader";
-import { IUserFilterRequest } from "../User/user.interface";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import { paginationHelper } from "../../../helpars/paginationHelper";
 

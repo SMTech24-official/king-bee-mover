@@ -82,8 +82,6 @@ const deleteDriver = async (id: string) => {
     });
 }
 
-
-
 const getDriver = async (id: string) => {
 
     const isDriverExist = await prisma.driver.findUnique({
@@ -159,10 +157,25 @@ const getAllDriver = async (options: IPaginationOptions, params:IDriverSearchFie
     };
 }
 
+// next day will be complete the service function
+const verifyDriver = async (id: string, files: Express.Multer.File[]) => {
+    const { Location: insuranceFront } = await fileUploader.uploadToDigitalOcean(files[0]);
+    const { Location: insuranceBack } = await fileUploader.uploadToDigitalOcean(files[1]);  
+    const driver = await prisma.driver.update({
+        where: { id },
+        data: {
+            insuranceFront: insuranceFront,
+            insuranceBack: insuranceBack,
+        },
+    });
+    return driver;
+}
+
 export const DriverService = {
     createDriver,
     updateDriver,
     deleteDriver,
     getDriver,
     getAllDriver,
+    verifyDriver,
 }

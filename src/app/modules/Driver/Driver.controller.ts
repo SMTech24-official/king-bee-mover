@@ -76,10 +76,26 @@ const deleteDriver = catchAsync(async (req: Request, res: Response, next: NextFu
     });
 });
 
+// verify a driver
+const verifyDriver = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const files = req.files as Express.Multer.File[];
+    const {id} = req.params;
+    const result = await DriverService.verifyDriver(id, files);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Driver verified successfully',
+        data: result,
+    });
+});
+
+
+
 export const DriverController = {
     createDriver,
     getAllDriver,
     getDriver,
     updateDriver,
     deleteDriver,
+    verifyDriver,
 }

@@ -5,8 +5,8 @@ import prisma from "../../../shared/prisma";
 import * as bcrypt from "bcrypt";
 import ApiError from "../../../errors/ApiErrors";
 import emailSender from "./emailSender";
-import httpStatus from "http-status"; 
-import { User, UserAccountStatus } from "@prisma/client";
+import httpStatus from "http-status";
+import { User, UserRole } from "@prisma/client";
 import { removeObjectProperty } from "../../../helpars/utils";
 
 // user login
@@ -23,7 +23,7 @@ const loginUser = async (payload: { email: string; password: string }) => {
       "User not found! with this email " + payload.email
     );
   }
-  
+
   const isCorrectPassword: boolean = await bcrypt.compare(
     payload.password,
     userData.password
@@ -47,30 +47,30 @@ const loginUser = async (payload: { email: string; password: string }) => {
 };
 
 // user register
-const registerUser = async (payload: { email: string; password: string; phoneNumber: string; }):Promise<{data:Omit<User,"password">,token:string}> => {
+const registerUser = async (payload: { email: string; password: string; phoneNumber: string; role: UserRole }): Promise<{ data: Omit<User, "password">, token: string }> => {
   const user = await prisma.user.findFirst({
-    where:{
-      OR:[
-        {email:payload.email},
-        {phoneNumber:payload.phoneNumber}
+    where: {
+      OR: [
+        { email: payload.email },
+        { phoneNumber: payload.phoneNumber }
       ]
     }
   })
 
-  if(user){
-    throw new ApiError(httpStatus.BAD_REQUEST,`User already exists with this email ${payload.email} or phone number ${payload.phoneNumber}`);
-  } 
+  if (user) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `User already exists with this email ${payload.email} or phone number ${payload.phoneNumber}`);
+  }
 
   const hashedPassword = await bcrypt.hash(payload.password, Number(config.bcrypt_salt_rounds));
 
   const userData = await prisma.user.create({
-    data:{
+    data: {
       ...payload,
-      password:hashedPassword
+      password: hashedPassword
     },
   });
 
-  const userDataExceptPassword = removeObjectProperty(userData, "password");  
+  const userDataExceptPassword = removeObjectProperty(userData, "password");
 
   const accessToken = jwtHelpers.generateToken(
     {
@@ -81,7 +81,7 @@ const registerUser = async (payload: { email: string; password: string; phoneNum
     config.jwt.jwt_secret as Secret,
     config.jwt.expires_in as string
   );
-  return {data: userDataExceptPassword,token:accessToken};
+  return { data: userDataExceptPassword, token: accessToken };
 }
 
 // change password
@@ -206,12 +206,12 @@ const sendOtp = async (phoneNumber: string) => {
 // verify number
 const verifyOtp = async (phoneNumber: string, otp: string, userId: string) => {
   const user = await prisma.user.findUnique({
-    where:{
-      id:userId,
+    where: {
+      id: userId,
     }
   });
 
-  if(!user){
+  if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
@@ -219,15 +219,8 @@ const verifyOtp = async (phoneNumber: string, otp: string, userId: string) => {
 
   // number verification will be done by twilio in future here we will send otp and verify it
 
-  await prisma.user.update({
-    where:{
-      id:userId,
-    },
-    data:{
-      phoneNumber:phoneNumber,
-      accountStatus:UserAccountStatus.Verified
-    }
-  });
+
+
 
   return user;
 };

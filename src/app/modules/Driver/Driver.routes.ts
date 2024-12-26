@@ -18,6 +18,16 @@ router.post('/',
     },
 );
 
+
+// *!verify a driver 
+router.post("/verify-driver", 
+    // auth(UserRole.Driver),
+    fileUploader.uploadImageAndFile,
+    DriverController.verifyDriver
+);
+
+
+
 // *!get all driver
 router.get('/', 
     // auth(UserRole.Admin),
@@ -41,6 +51,10 @@ router.delete('/:id',
     // auth(UserRole.Admin),
     DriverController.deleteDriver
 );
+
+
+
+
 
 export const driverRoutes = router;
 
