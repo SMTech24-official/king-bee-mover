@@ -1,6 +1,6 @@
 // Trip.service: Module file for the Trip.service functionality.
 
-import { Prisma, Trip } from "@prisma/client";
+import { Prisma, Trip, TripStatus, UserRole } from "@prisma/client";
 import prisma from "../../../shared/prisma";
 import httpStatus from "http-status";
 import ApiError from "../../../errors/ApiErrors";
@@ -95,16 +95,16 @@ const getAllTrip = async (options: IPaginationOptions, params: ITripSearchFields
 }
 
 
-
-
-
-
-
-
-
-
-
 const getTrip = async (id: string) => {
+
+    const isTripExist = await prisma.trip.findUnique({
+        where: { id }
+    });
+
+    if (!isTripExist) {
+        throw new ApiError(404, "Trip not found");
+    }
+
     const trip = await prisma.trip.findUnique({
         where: { id }
     });
@@ -112,14 +112,35 @@ const getTrip = async (id: string) => {
 }
 
 const updateTrip = async (id: string, payload: Trip) => {
-    const trip = await prisma.trip.update({
+    const isTripExist = await prisma.trip.findUnique({
+        where: { id }
+    });
+    if (!isTripExist) {
+        throw new ApiError(404, "Trip not found");
+    }
+
+
+const trip = await prisma.trip.update({
         where: { id },
         data: payload
     });
     return trip;
 }
 
-const deleteTrip = async (id: string) => {
+const deleteTrip = async (id: string, role: UserRole) => {
+    const isTripExist = await prisma.trip.findUnique({
+        where: { id }
+    });
+
+    if (!isTripExist) {
+        throw new ApiError(404, "Trip not found");
+    }
+
+    // check if the trip is confirmed and the user is customer then charge 20% of the total cost
+    if(role === UserRole.Customer && isTripExist.tripStatus == TripStatus.Confirmed){
+        throw new ApiError(403, "You have to pay 20% of the total cost to cancel the trip");
+    }
+    
     const trip = await prisma.trip.delete({
         where: { id }
     });

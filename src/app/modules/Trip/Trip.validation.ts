@@ -1,6 +1,6 @@
 // Trip.validation: Module file for the Trip.validation functionality.
 
-import { PaymentMethodType } from "@prisma/client";
+import { PaymentMethodType, TripStatus } from "@prisma/client";
 import { z } from "zod";
 
 const createTripValidationSchema = z.object({
@@ -49,6 +49,30 @@ const createTripValidationSchema = z.object({
     })
 });
 
+
+const updateTripValidationSchema = z.object({
+    body: z.object({
+        loadLocation: z.string().optional(),
+        unloadLocation: z.string().optional(),
+        customerId: z.string().optional(),
+        truckId: z.string().optional(),
+        date: z.string().optional().transform((date) => date ? new Date(date) : undefined),
+        time: z.string().optional(),
+        productType: z.string().optional(),
+        productDetails: z.string().optional(),
+        paymentMethodType: z.enum([PaymentMethodType.Online, PaymentMethodType.Offline] as const).optional(),
+        tripStatus: z.enum([TripStatus.Completed, TripStatus.Pending, TripStatus.Published, TripStatus.Cancelled, TripStatus.Confirmed] as const).optional(),   
+        totalCost: z.number().optional(),
+        distance: z.number().optional(),
+        weight: z.number().optional(),
+        tags: z.array(z.string()).nonempty({ message: "At least one tag is required" }).optional(),
+        cancellationReason: z.string().optional(),
+    }).strict({
+        message: "Invalid request body",
+    }),
+});
+
 export const TripValidation = {
     createTripValidationSchema,
+    updateTripValidationSchema
 };

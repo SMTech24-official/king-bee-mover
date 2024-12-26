@@ -21,17 +21,18 @@ router.get("/",
 );
 
 router.get("/:id",
-    auth(UserRole.Customer, UserRole.Admin, UserRole.Driver),
+    // auth(UserRole.Customer, UserRole.Admin, UserRole.Driver),
     TripController.getTrip
 );
 
 router.patch("/:id",
-    auth(UserRole.Customer, UserRole.Admin),
+    // auth(UserRole.Customer, UserRole.Admin),
+    validateRequest(TripValidation.updateTripValidationSchema),
     TripController.updateTrip
 );
 
 router.delete("/:id",
-    auth(UserRole.Customer, UserRole.Admin, UserRole.Driver),
+    // auth(UserRole.Customer, UserRole.Admin),
     TripController.deleteTrip
 );
 

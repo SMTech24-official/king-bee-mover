@@ -91,7 +91,7 @@ model Trip {
   tripStatus        TripStatus @default(Pending) // Completed, Pending, Published, Cancelled, Confirmed
   assignedDriverId  String?
   tags              String[]
-
+  cancellationReason String?
   // Relationships
   customer          Customer   @relation(fields: [customerId], references: [id])
   driver            Driver?    @relation(fields: [assignedDriverId], references: [id])
