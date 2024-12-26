@@ -12,20 +12,21 @@ const createDriverSchema = z.object({
 });
 
 const updateDriverSchema = z.object({
-    name: z.string().optional(),
-    profileImage: z.string().optional(),
-    nationalIdFront: z.string().optional(),
-    nationalIdBack: z.string().optional(),
-    licenseFront: z.string().optional(),
-    licenseBack: z.string().optional(),
-    insurance: z.boolean().optional(),
-    insuranceFront: z.string().optional(),
-    insuranceBack: z.string().optional(),
-    accountStatus: z.enum([UserAccountStatus.Pending, UserAccountStatus.Processing, UserAccountStatus.Verified]).optional(),
+    body: z.object({
+        name: z.string().optional(),
+        profileImage: z.string().optional(),
+        nationalIdFront: z.string().optional(),
+        nationalIdBack: z.string().optional(),
+        licenseFront: z.string().optional(),
+        licenseBack: z.string().optional(),
+        insurance: z.boolean().optional(),
+        insuranceFront: z.string().optional(),
+        insuranceBack: z.string().optional(),
+        accountStatus: z.enum([UserAccountStatus.Pending, UserAccountStatus.Processing, UserAccountStatus.Verified]).optional(),
+    })
 }).strict({
     message: "Invalid request body",
 });
-
 
 export const DriverValidation = {
     createDriverSchema,

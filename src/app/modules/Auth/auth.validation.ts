@@ -3,9 +3,10 @@ import { z } from "zod";
 
 // *!register user zod schema
 const RegisterValidationSchema = z.object({
-  email: z.string({
-    required_error: "Email is required"
-  }).email({
+  body: z.object({
+    email: z.string({
+      required_error: "Email is required"
+    }).email({
     message: "Invalid email address"
   }),
   password: z.string({
@@ -18,17 +19,20 @@ const RegisterValidationSchema = z.object({
   }).min(10, {
     message: "Phone number must be at least 10 characters"
   }),
-  role: z.enum([UserRole.Customer, UserRole.Driver, UserRole.Admin] as [string, ...string[]]),
+  role: z.enum([UserRole.Customer, UserRole.Driver, UserRole.Admin] as [string, ...string[]]), 
+  }),
 });
 
 // *!login user zod schema
 const LoginValidationSchema = z.object({
-  email: z
-    .string({ required_error: "Email is required" })
-    .email({ message: "Invalid email address" }),
+  body: z.object({
+    email: z
+      .string({ required_error: "Email is required" })
+      .email({ message: "Invalid email address" }),
   password: z
     .string({ required_error: "Password is required" })
     .min(8, { message: "Password must be at least 8 characters long" })
+  }),
 });
 
 // *!send otp zod schema

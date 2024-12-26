@@ -27,7 +27,7 @@ const createTrip = async (payload: Trip) => {
 }
 
 const getAllTrip = async (options: IPaginationOptions, params: ITripSearchFields) => {
-    const { page, limit, skip } = paginationHelper.calculatePagination(options);
+    const { page, limit, skip , sortBy, sortOrder } = paginationHelper.calculatePagination(options);
     const { searchTerm, ...filterData } = params;
     const andCondions: Prisma.TripWhereInput[] = [];
 
@@ -67,9 +67,9 @@ const getAllTrip = async (options: IPaginationOptions, params: ITripSearchFields
         skip,
         take: limit,
         orderBy:
-            options.sortBy && options.sortOrder
+             sortBy && sortOrder
                 ? {
-                    [options.sortBy]: options.sortOrder,
+                    [sortBy]: sortOrder,
                 }
                 : {
                     createdAt: "desc",
@@ -140,7 +140,7 @@ const deleteTrip = async (id: string, role: UserRole) => {
     if(role === UserRole.Customer && isTripExist.tripStatus == TripStatus.Confirmed){
         throw new ApiError(403, "You have to pay 20% of the total cost to cancel the trip");
     }
-    
+
     const trip = await prisma.trip.delete({
         where: { id }
     });

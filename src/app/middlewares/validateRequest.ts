@@ -7,9 +7,9 @@ const validateRequest =
     try {
       await schema.parseAsync({
         body: req.body,
-        query: req.query,
-        params: req.params,
-        cookies: req.cookies,
+        // query: req.query,
+        // params: req.params,
+        // cookies: req.cookies,
       });
       return next();
     } catch (error) {

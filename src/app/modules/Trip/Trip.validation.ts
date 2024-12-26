@@ -61,7 +61,7 @@ const updateTripValidationSchema = z.object({
         productType: z.string().optional(),
         productDetails: z.string().optional(),
         paymentMethodType: z.enum([PaymentMethodType.Online, PaymentMethodType.Offline] as const).optional(),
-        tripStatus: z.enum([TripStatus.Completed, TripStatus.Pending, TripStatus.Published, TripStatus.Cancelled, TripStatus.Confirmed] as const).optional(),   
+        tripStatus: z.enum([TripStatus.Completed, TripStatus.Pending, TripStatus.Cancelled, TripStatus.Confirmed] as const).optional(),   
         totalCost: z.number().optional(),
         distance: z.number().optional(),
         weight: z.number().optional(),

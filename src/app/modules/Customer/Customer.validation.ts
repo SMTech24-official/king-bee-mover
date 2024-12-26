@@ -14,15 +14,17 @@ const createCustomerSchema = z.object({
 
 
 const updateCustomerSchema = z.object({
-    name: z.string().optional(),
-    companyName: z.string().optional(),
-    profileImage: z.string().optional(),
-    accountStatus: z.enum([
-        UserAccountStatus.Pending,
-        UserAccountStatus.Processing,
-        UserAccountStatus.Verified]).optional(),
-}).strict({
-    message: "Invalid request body",
+    body: z.object({
+        name: z.string().optional(),
+        companyName: z.string().optional(),
+        profileImage: z.string().optional(),
+        accountStatus: z.enum([
+            UserAccountStatus.Pending,
+            UserAccountStatus.Processing,
+            UserAccountStatus.Verified]).optional(),
+    }).strict({
+        message: "Invalid request body",
+    })
 });
 
 export const CustomerValidation = {
