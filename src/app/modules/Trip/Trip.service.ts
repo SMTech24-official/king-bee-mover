@@ -1,6 +1,6 @@
 // Trip.service: Module file for the Trip.service functionality.
 
-import { Prisma, Trip, TripStatus, UserRole } from "@prisma/client";
+import { DriverTripApplicationStatus, Prisma, Trip, TripStatus, UserRole } from "@prisma/client";
 import prisma from "../../../shared/prisma";
 import httpStatus from "http-status";
 import ApiError from "../../../errors/ApiErrors";
@@ -27,7 +27,7 @@ const createTrip = async (payload: Trip) => {
 }
 
 const getAllTrip = async (options: IPaginationOptions, params: ITripSearchFields) => {
-    const { page, limit, skip , sortBy, sortOrder } = paginationHelper.calculatePagination(options);
+    const { page, limit, skip, sortBy, sortOrder } = paginationHelper.calculatePagination(options);
     const { searchTerm, ...filterData } = params;
     const andCondions: Prisma.TripWhereInput[] = [];
 
@@ -45,13 +45,13 @@ const getAllTrip = async (options: IPaginationOptions, params: ITripSearchFields
     if (Object.keys(filterData).length > 0) {
         andCondions.push({
             AND: Object.keys(filterData).map((key) => {
-                if(key === "tags"){
+                if (key === "tags") {
                     return {
                         tags: {
                             has: (filterData as any)[key],
                         },
                     };
-                }else{
+                } else {
                     return {
                         [key]: { equals: (filterData as any)[key] },
                     };
@@ -67,7 +67,7 @@ const getAllTrip = async (options: IPaginationOptions, params: ITripSearchFields
         skip,
         take: limit,
         orderBy:
-             sortBy && sortOrder
+            sortBy && sortOrder
                 ? {
                     [sortBy]: sortOrder,
                 }
@@ -106,12 +106,15 @@ const getTrip = async (id: string) => {
     }
 
     const trip = await prisma.trip.findUnique({
-        where: { id }
+        where: { id },
+        include: {
+            driverTripApplications: true
+        }
     });
     return trip;
 }
 
-const updateTrip = async (id: string, payload: Trip) => {
+const updateTrip = async (id: string, payload: Partial<Trip>) => {
     const isTripExist = await prisma.trip.findUnique({
         where: { id }
     });
@@ -119,11 +122,43 @@ const updateTrip = async (id: string, payload: Trip) => {
         throw new ApiError(404, "Trip not found");
     }
 
+    // bulk update the trip status and the driver trip application status
+    if (payload.tripStatus === TripStatus.Confirmed
+        || payload.tripStatus === TripStatus.Cancelled
+        || payload.tripStatus === TripStatus.Completed) {
 
-const trip = await prisma.trip.update({
+        const res = await prisma.$transaction(async (tx) => {
+           
+            const trip = await tx.trip.update({
+                where: { id },
+                data: payload
+            });
+
+            await tx.driverTripApplication.update({
+                where: {
+                    tripId_driverId: {
+                        tripId: isTripExist.id,
+                        driverId: isTripExist.assignedDriverId ?? ""
+                    }
+                },
+                data: {
+                    status: payload.tripStatus == TripStatus.Cancelled ?
+                        DriverTripApplicationStatus.Cancelled : payload.tripStatus == TripStatus.Completed ?
+                            DriverTripApplicationStatus.Completed : DriverTripApplicationStatus.Confirmed
+                }
+            })
+            
+            return trip;
+        })
+
+        return res;
+    }
+
+    const trip = await prisma.trip.update({
         where: { id },
         data: payload
     });
+
     return trip;
 }
 
@@ -137,7 +172,7 @@ const deleteTrip = async (id: string, role: UserRole) => {
     }
 
     // check if the trip is confirmed and the user is customer then charge 20% of the total cost
-    if(role === UserRole.Customer && isTripExist.tripStatus == TripStatus.Confirmed){
+    if (role === UserRole.Customer && isTripExist.tripStatus == TripStatus.Confirmed) {
         throw new ApiError(403, "You have to pay 20% of the total cost to cancel the trip");
     }
 

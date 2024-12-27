@@ -1,5 +1,6 @@
 // DriverTripApplication.routes: Module file for the DriverTripApplication.routes functionality.
 
+
 import { Router } from "express";
 import { DriverTripApplicationController } from "./DriverTripApplication.controller";
 import validateRequest from "../../middlewares/validateRequest"; 
@@ -24,6 +25,7 @@ router.get("/:id",
 
 router.patch("/:id",
     // auth(UserRole.Admin),
+    validateRequest(DriverTripApplicationValidation.assignDriverToTripValidation),
     DriverTripApplicationController.assignDriverToTrip);
 
 router.delete("/:id",

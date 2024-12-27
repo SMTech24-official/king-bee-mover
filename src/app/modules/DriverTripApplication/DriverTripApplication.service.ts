@@ -83,6 +83,7 @@ const getAllDriverTripApplication = async (options: IPaginationOptions, params: 
 const getSingleDriverTripApplication = async (id: string) => {
     const result = await prisma.driverTripApplication.findUnique({
         where: { id }
+        
     });
     if (!result) {
         throw new ApiError(httpStatus.NOT_FOUND, "Driver trip application not found");
@@ -91,6 +92,7 @@ const getSingleDriverTripApplication = async (id: string) => {
 }
 
 const assignDriverToTrip = async (id: string, payload: { tripId:string, status: DriverTripApplicationStatus }) => {
+    
     const isExit = await prisma.driverTripApplication.findUnique({
         where: { id }
     });  
@@ -98,9 +100,17 @@ const assignDriverToTrip = async (id: string, payload: { tripId:string, status: 
     if (!isExit) {
         throw new ApiError(httpStatus.NOT_FOUND, "Driver trip application not found");
     }
+    
+    // check if the driver is already assigned to the trip
+    const isAlreadyAssignedToThisTrip = await prisma.trip.findUnique({
+        where: { id: payload.tripId, tripStatus: TripStatus.Assigned }
+    });
+     
+    if (isAlreadyAssignedToThisTrip) {
+        throw new ApiError(httpStatus.CONFLICT, "Driver already assigned to this trip");
+    }
 
     const result = await prisma.$transaction(async (tsx) => {
-
         await tsx.driverTripApplication.updateMany({
             where: { tripId: payload.tripId },
             data: {
@@ -132,6 +142,7 @@ const deleteDriverTripApplication = async (id: string) => {
     const isExit = await prisma.driverTripApplication.findUnique({
         where: { id }
     });
+
     if (!isExit) {
         throw new ApiError(httpStatus.NOT_FOUND, "application for this trip not found");
     }

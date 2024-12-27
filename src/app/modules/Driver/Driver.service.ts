@@ -40,7 +40,6 @@ const createDriver = async (data: Driver, file: Express.Multer.File) => {
     return driver;
 }
 
-
 const getAllDriver = async (options: IPaginationOptions, params:IDriverSearchFields ) => {
     const { page, limit, skip } = paginationHelper.calculatePagination(options);
     const { searchTerm, ...filterData } = params;
@@ -143,7 +142,6 @@ const deleteDriver = async (id: string) => {
 }
 
 const getDriver = async (id: string) => {
-
     const isDriverExist = await prisma.driver.findUnique({
         where: { id },
     });
@@ -154,10 +152,12 @@ const getDriver = async (id: string) => {
 
     const driver = await prisma.driver.findUnique({
         where: { id },
+        include: {
+            driverTripApplications: true
+        }
     });
     return driver;
 }
-
 
 // next day will be complete the service function
 const verifyDriver = async (id: string, files: Express.Multer.File[]) => {
