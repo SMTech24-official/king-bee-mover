@@ -6,7 +6,8 @@ export const tripFilterableFields = [
     'tags',
     "customerId",
     "truckId",
-    "assignedDriverId"
+    "assignedDriverId", 
+    "driverId"
 ];
 
 

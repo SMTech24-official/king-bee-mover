@@ -43,17 +43,17 @@ const createDriverTripApplication = async (driverTripApplication: DriverTripAppl
 const getAllDriverTripApplication = async (options: IPaginationOptions, params: IDriverTripApplicationSearchFields) => {
     const { page, limit, skip, sortBy, sortOrder } = paginationHelper.calculatePagination(options);
 
-    const andCondions: Prisma.DriverTripApplicationWhereInput[] = [];
+    const andConditions: Prisma.DriverTripApplicationWhereInput[] = [];
 
     if (Object.keys(params).length > 0) {
-        andCondions.push({
+        andConditions.push({
             AND: Object.keys(params).map((key) => {
                 return { [key]: { equals: (params as any)[key] } };
             }),
         });
     }
 
-    const whereConditons: Prisma.DriverTripApplicationWhereInput = andCondions.length > 0 ? { AND: andCondions } : {};
+    const whereConditons: Prisma.DriverTripApplicationWhereInput = andConditions.length > 0 ? { AND: andConditions } : {};
 
     const result = await prisma.driverTripApplication.findMany({
         where: whereConditons,
@@ -92,7 +92,7 @@ const getSingleDriverTripApplication = async (id: string) => {
 }
 
 const assignDriverToTrip = async (id: string, payload: { tripId:string, status: DriverTripApplicationStatus }) => {
-    
+
     const isExit = await prisma.driverTripApplication.findUnique({
         where: { id }
     });  

@@ -67,9 +67,6 @@ const getAllDriver = async (options: IPaginationOptions, params:IDriverSearchFie
         where: whereConditons,
         skip,
         take: limit,
-        include: {
-            user: true,
-        },
         orderBy:
             options.sortBy && options.sortOrder
                 ? {
@@ -144,6 +141,10 @@ const deleteDriver = async (id: string) => {
 const getDriver = async (id: string) => {
     const isDriverExist = await prisma.driver.findUnique({
         where: { id },
+        include: {
+            driverTripApplications: true,
+            trips: true
+        }
     });
 
     if(!isDriverExist){
@@ -156,6 +157,7 @@ const getDriver = async (id: string) => {
             driverTripApplications: true
         }
     });
+    
     return driver;
 }
 

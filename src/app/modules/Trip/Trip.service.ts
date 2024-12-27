@@ -52,6 +52,13 @@ const getAllTrip = async (options: IPaginationOptions, params: ITripSearchFields
                         },
                     };
                 } else {
+                    if(key === "driverId"){
+                        return {
+                            driver: {
+                                id: (filterData as any)[key]
+                            }
+                        }
+                    }
                     return {
                         [key]: { equals: (filterData as any)[key] },
                     };
