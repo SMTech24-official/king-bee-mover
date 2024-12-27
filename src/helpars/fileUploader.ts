@@ -30,6 +30,7 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, path.join(process.cwd(), "uploads"));
   },
+  
   filename: function (req, file, cb) {
     cb(null, `${Date.now()}_${file.originalname}`);
   },
@@ -43,12 +44,18 @@ const uploadImage = upload.single("image");
 const uploadImageAndFile = upload.fields([
   { name: "video", maxCount: 1 },
   { name: "image", maxCount: 1 },
+  { name: "nationalIdFront", maxCount: 1 },
+  { name: "nationalIdBack", maxCount: 1 },
+  { name: "licenseFront", maxCount: 1 },
+  { name: "licenseBack", maxCount: 1 },
+  { name: "insuranceFront", maxCount: 1 },
+  { name: "insuranceBack", maxCount: 1 },
 ]);
 
 // Upload file to DigitalOcean Spaces
 const uploadToDigitalOcean = async (
   file: Express.Multer.File
-): Promise<UploadResponse> => {
+): Promise<UploadResponse> => { 
   if (!file) {
     throw new Error("File is required for uploading.");
   }

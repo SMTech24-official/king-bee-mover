@@ -21,7 +21,7 @@ router.post('/',
 
 
 // *!verify a driver 
-router.post("/verify-driver", 
+router.patch("/verify-driver/:id", 
     // auth(UserRole.Driver),
     fileUploader.uploadImageAndFile,
     DriverController.verifyDriver

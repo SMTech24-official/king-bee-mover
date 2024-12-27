@@ -1,6 +1,4 @@
-// Driver.service: Module file for the Driver.service functionality.
-
-import { Driver, Prisma } from "@prisma/client";
+import { Driver, Prisma, UserAccountStatus } from "@prisma/client";
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
@@ -157,22 +155,28 @@ const getDriver = async (id: string) => {
             driverTripApplications: true
         }
     });
-    
+
     return driver;
 }
 
-// next day will be complete the service function
 const verifyDriver = async (id: string, files: Express.Multer.File[]) => {
-    const { Location: insuranceFront } = await fileUploader.uploadToDigitalOcean(files[0]);
-    const { Location: insuranceBack } = await fileUploader.uploadToDigitalOcean(files[1]);  
-    const driver = await prisma.driver.update({
+    
+    const payload: Record<string, string | boolean> = {};
+    const values: Array<Express.Multer.File[]> = Object.values(files) as unknown as Array<Express.Multer.File[]>;
+    
+    for (const file of values) { 
+        const { Location } = await fileUploader.uploadToDigitalOcean(file[0]);
+        payload[file[0].fieldname] = Location;
+    }
+
+    const driver =  await prisma.driver.update({
         where: { id },
         data: {
-            insuranceFront: insuranceFront,
-            insuranceBack: insuranceBack,
+            ...payload, 
+            accountStatus: UserAccountStatus.Processing,
         },
     });
-    return driver;
+    return driver;   
 }
 
 export const DriverService = {

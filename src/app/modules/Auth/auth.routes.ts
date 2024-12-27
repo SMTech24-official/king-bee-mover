@@ -22,22 +22,26 @@ router.post(
   AuthController.registerUser
 )
 
+// send otp
 router.post(
   '/send-otp',
   validateRequest(authValidation.SendOtpValidationSchema),
   AuthController.sendOtp
 )
 
+// verify otp
 router.post(
-  '/verify-otp',
-  auth(),
+  '/verify-otp', 
   validateRequest(authValidation.VerifyOtpValidationSchema),
   AuthController.verifyOtp
 )
 
 // user logout route
-router.post("/logout", AuthController.logoutUser);
+router.post("/logout",
+  auth(),
+ AuthController.logoutUser);
 
+// change password
 router.put(
   "/change-password",
   auth(),
@@ -45,11 +49,13 @@ router.put(
   AuthController.changePassword
 );
 
+// forgot password
 router.post(
   '/forgot-password',
   AuthController.forgotPassword
 );
 
+// reset password
 router.post(
   '/reset-password',
   AuthController.resetPassword

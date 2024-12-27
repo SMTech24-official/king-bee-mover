@@ -37,31 +37,35 @@ const LoginValidationSchema = z.object({
 
 // *!send otp zod schema
 const SendOtpValidationSchema = z.object({
+  body: z.object({
   phoneNumber: z
-    .string({required_error: "Phone number is required"})
+    .string({required_error: "Phone number is required with country code"})
     .min(10, {
     message: 'Phone number must be at least 10 characters',
   })
-    .refine(value => /^\+?1?\d{10}$/g.test(value), {    // check USA phone number format
-    message: 'Invalid USA phone number format',
+  //   .refine(value => /^\+?1?\d{10}$/g.test(value), {    // check USA phone number format
+  //   message: 'Invalid USA phone number format',
+  // }),  
   }),
 });
 
 // *!verify otp zod schema
 const VerifyOtpValidationSchema = z.object({
+  body: z.object({
   phoneNumber: z
   .string({required_error: "Phone number is required"})
   .min(10, {
     message: 'Phone number must be at least 10 characters',
-  })
-  .refine(value => /^\+?1?\d{10}$/g.test(value), {    // check USA phone number format
-    message: 'Invalid USA phone number format',
   }),
+  // .refine(value => /^\+?1?\d{10}$/g.test(value), {    // check USA phone number format
+  //   message: 'Invalid USA phone number format',
+  // }),
 
   otp: z
   .string({required_error: "OTP is required"})
   .min(6, {
     message: 'OTP must be at least 6 characters',
+  }),
   }),
 });
 

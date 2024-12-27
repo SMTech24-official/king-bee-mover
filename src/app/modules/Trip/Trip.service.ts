@@ -1,5 +1,3 @@
-// Trip.service: Module file for the Trip.service functionality.
-
 import { DriverTripApplicationStatus, Prisma, Trip, TripStatus, UserRole } from "@prisma/client";
 import prisma from "../../../shared/prisma";
 import httpStatus from "http-status";
@@ -100,7 +98,6 @@ const getAllTrip = async (options: IPaginationOptions, params: ITripSearchFields
         data: result
     }
 }
-
 
 const getTrip = async (id: string) => {
 

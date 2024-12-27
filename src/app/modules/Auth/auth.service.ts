@@ -8,6 +8,7 @@ import emailSender from "./emailSender";
 import httpStatus from "http-status";
 import { User, UserRole } from "@prisma/client";
 import { removeObjectProperty } from "../../../helpars/utils";
+import { Twilio } from "twilio";
 
 // user login
 const loginUser = async (payload: { email: string; password: string }) => {
@@ -111,7 +112,7 @@ const changePassword = async (
 
   const hashedPassword = await bcrypt.hash(newPassword, 12);
 
-  const result = await prisma.user.update({
+  await prisma.user.update({
     where: {
       id: decodedToken.id,
     },
@@ -144,7 +145,7 @@ const forgotPassword = async (payload: { email: string }) => {
     userData.email,
     `
      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-          <p>Dear user</p>
+          <p>Dear User</p>
           
           <p>We received a request to reset your password. Click the button below to reset your password:</p>
           
@@ -196,33 +197,41 @@ const resetPassword = async (token: string, payload: { password: string }) => {
 };
 
 const sendOtp = async (phoneNumber: string) => {
-  // number verification will be done by twilio in future here we will send otp and verify it
-
-  const otp = Math.floor(100000 + Math.random() * 900000);
-  await emailSender("OTP Verification", phoneNumber, `Your OTP is ${otp}`);   // otp will be sent via phone number. we will use twilio for this in future.
-  return otp;
+  const client = new Twilio(config.twilio.account_sid, config.twilio.auth_token);
+  const createVerification = await client.verify.v2
+    .services(config.twilio.verify_service_sid as string)
+    .verifications.create({
+      to: phoneNumber,
+      channel: "sms"
+    });
+  return { status: createVerification.status };
 }
 
-// verify number
-const verifyOtp = async (phoneNumber: string, otp: string, userId: string) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    }
-  });
 
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+// verify number
+const verifyOtp = async (phoneNumber: string, otp: string) => {
+  const client = new Twilio(config.twilio.account_sid, config.twilio.auth_token);
+  const verify = await client.verify.v2.services(config.twilio.verify_service_sid as string)
+    .verificationChecks.create({
+      to: phoneNumber,
+      code: otp
+    });
+
+  if (verify.status != "approved") {
+    throw new ApiError(httpStatus.BAD_REQUEST, "OTP is not correct");
   }
 
-  // here otp will be verified.  
+  return {
+    phoneNumber,
+    status: verify.status
+  };
 
   // number verification will be done by twilio in future here we will send otp and verify it
 
 
 
 
-  return user;
+  // return user;
 };
 
 
