@@ -198,37 +198,89 @@ const resetPassword = async (token: string, payload: { password: string }) => {
 };
 
 // send otp
-const sendOtp = async (phoneNumber: string) => {
+const sendOtp = async (phoneNumber: string) =>  {
   const client = new Twilio(config.twilio.account_sid, config.twilio.auth_token);
-  const createVerification = await client.verify.v2
-    .services(config.twilio.verify_service_sid as string)
-    .verifications.create({
-      to: phoneNumber,
-      channel: "sms"
-    });
-  return { status: createVerification.status };
-}
+  const OTP_EXPIRY_TIME = 2 * 60 * 1000;
 
-// verify number
-const verifyOtp = async (phoneNumber: string, otp: string) => {
-  const client = new Twilio(config.twilio.account_sid, config.twilio.auth_token);
-  const verify = await client.verify.v2.services(config.twilio.verify_service_sid as string)
-    .verificationChecks.create({
-      to: phoneNumber,
-      code: otp
-    });
-
-  if (verify.status != "approved") {
-    throw new ApiError(httpStatus.BAD_REQUEST, "OTP is not correct");
+  if (!phoneNumber) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Phone number is required");
   }
 
-  return {
-    phoneNumber,
-    status: verify.status
+  // Generate 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  const expiry = new Date(Date.now() + OTP_EXPIRY_TIME);
+
+  // Store OTP in database using Prisma
+  const isStoredOtp = await prisma.oTP.upsert({
+    where: { phoneNumber },
+    update: { otpCode: otp, expiry },
+    create: { phoneNumber, otpCode: otp, expiry },
+  });
+
+  if (!isStoredOtp) {
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to store OTP in the database."
+    );
+  }
+
+  // Send OTP via Twilio SMS
+  const result = await client.messages.create({
+    body: `Your OTP code is ${otp}. It will expire in 2 minutes.`,
+    from: config.twilio.phone_number,
+    to: phoneNumber,
+  });
+
+  const formateRes = {
+    body: result.body,
+    from: result.from,
+    to: result.to,
+    status: result.status,
+    sid: result.sid,
+    dateCreated: result.dateCreated,
   };
-
-
+  return formateRes;
 };
+
+// verify number
+const verifyOtp = async (payload: { phoneNumber: string, otp: string }) => {
+  const { phoneNumber, otp } = payload; 
+  if (!phoneNumber || !otp) {
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "Phone number and OTP are required"
+    );
+  }
+
+  const storedOtp = await prisma.oTP.findUnique({
+    where: { phoneNumber },
+  });
+
+  if (!storedOtp) {
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "OTP not found. Please request a new one.' "
+    );
+  }
+
+  if (new Date() > storedOtp.expiry) {
+    throw new ApiError(
+      httpStatus.EXPECTATION_FAILED,
+      "OTP has expired. Please request a new one."
+    );
+  }
+
+  if (storedOtp.otpCode !== otp) {
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      "Invalid OTP. Please check the code and try again."
+    );
+  }
+
+  return { phoneNumber };
+};
+
 
 
 export const AuthServices = {

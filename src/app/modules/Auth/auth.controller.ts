@@ -101,8 +101,8 @@ const sendOtp = catchAsync(async (req: Request, res: Response) => {
 });
 
 const verifyOtp = catchAsync(async (req: Request, res: Response) => {
-  const {phoneNumber, otp} = req.body; 
-  const result = await AuthServices.verifyOtp(phoneNumber, otp);
+  const payload = req.body; 
+  const result = await AuthServices.verifyOtp(payload);
 
   sendResponse(res, {
       statusCode: httpStatus.OK,
