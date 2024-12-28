@@ -123,6 +123,7 @@ const changePassword = async (
   return { message: "Password changed successfully" };
 };
 
+// forgot password
 const forgotPassword = async (payload: { email: string }) => {
   const userData = await prisma.user.findUniqueOrThrow({
     where: {
@@ -196,6 +197,7 @@ const resetPassword = async (token: string, payload: { password: string }) => {
   return { message: "Password reset successfully" };
 };
 
+// send otp
 const sendOtp = async (phoneNumber: string) => {
   const client = new Twilio(config.twilio.account_sid, config.twilio.auth_token);
   const createVerification = await client.verify.v2
@@ -206,7 +208,6 @@ const sendOtp = async (phoneNumber: string) => {
     });
   return { status: createVerification.status };
 }
-
 
 // verify number
 const verifyOtp = async (phoneNumber: string, otp: string) => {
@@ -226,12 +227,7 @@ const verifyOtp = async (phoneNumber: string, otp: string) => {
     status: verify.status
   };
 
-  // number verification will be done by twilio in future here we will send otp and verify it
 
-
-
-
-  // return user;
 };
 
 

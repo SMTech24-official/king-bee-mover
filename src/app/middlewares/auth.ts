@@ -11,7 +11,7 @@ import prisma from "../../shared/prisma";
 const auth = (...roles: string[]) => {
   return async (
     req: Request & { user?: any },
-    res: Response,
+    _res: Response,
     next: NextFunction
   ) => {
     try {
@@ -25,6 +25,7 @@ const auth = (...roles: string[]) => {
         token,
         config.jwt.jwt_secret as Secret
       );
+      
       const { id, role, iat } = verifiedUser;
 
       const user = await prisma.user.findUnique({

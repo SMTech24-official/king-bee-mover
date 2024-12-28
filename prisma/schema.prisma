@@ -24,6 +24,16 @@ model User {
   @@map("users")
 }
 
+// otp model 
+model OTP {
+  id          String   @id @default(uuid()) @map("_id")
+  phoneNumber String   @unique
+  otpCode     String
+  expiry      DateTime
+
+  @@map("otps")
+}
+
 // Driver model
 model Driver {
   id                String     @id @default(uuid()) @map("_id")
@@ -37,7 +47,7 @@ model Driver {
   insurance         Boolean   @default(false)
   insuranceFront    String?
   insuranceBack     String?
-  
+  totalEarnings     Float      @default(0) // Total earnings of the driver 
   accountStatus UserAccountStatus @default(Pending)  // Pending, Processing, Verified
 
   // Relationships
@@ -61,7 +71,8 @@ model Customer {
   profileImage String
   companyName  String?
   accountStatus UserAccountStatus @default(Verified)  // Pending, Processing, Verified
-
+  stripeCustomerId  String?
+  
   // Relationships
   user         User       @relation(fields: [userId], references: [id])
 
@@ -151,14 +162,13 @@ model DriverTripApplication {
 model Payment {
   id                String     @id @default(uuid()) @map("_id")
   customerId        String?
+  stripeCustomerId  String?
   driverId          String?
   tripId            String
   amount            Float
-  paymentMethod     String     // Online or Offline
-  status            String     // Pending, Completed, Failed
-  transactionId     String?
+  status            String     // Pending, Completed, Failed 
   timestamp         DateTime   @default(now())
-
+  
   // Relationships
   customer          Customer?  @relation(fields: [customerId], references: [id])
   driver            Driver?    @relation(fields: [driverId], references: [id])
