@@ -105,7 +105,8 @@ const assignDriverToTrip = async (id: string, payload: { tripId:string, status: 
     const isAlreadyAssignedToThisTrip = await prisma.trip.findUnique({
         where: { id: payload.tripId, tripStatus: TripStatus.Assigned }
     });
-     
+
+    
     if (isAlreadyAssignedToThisTrip) {
         throw new ApiError(httpStatus.CONFLICT, "Driver already assigned to this trip");
     }

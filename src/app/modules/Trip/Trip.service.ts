@@ -5,7 +5,7 @@ import ApiError from "../../../errors/ApiErrors";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import { paginationHelper } from "../../../helpars/paginationHelper";
 import { ITripSearchFields } from "./Trip.interface";
-import { tripSearchableFields } from "./Trip.constant";
+import { tripSearchableFields } from "./Trip.constant"; 
 
 const createTrip = async (payload: Trip) => {
 
@@ -166,9 +166,13 @@ const updateTrip = async (id: string, payload: Partial<Trip>) => {
     return trip;
 }
 
-const deleteTrip = async (id: string, role: UserRole) => {
-    const isTripExist = await prisma.trip.findUnique({
-        where: { id }
+const cancelTrip = async (id: string, role: UserRole) => {
+
+    const isTripExist = await prisma.trip.findUnique({ 
+        where: { id },
+        include: {
+            customer: true
+        }
     });
 
     if (!isTripExist) {
@@ -177,6 +181,21 @@ const deleteTrip = async (id: string, role: UserRole) => {
 
     // check if the trip is confirmed and the user is customer then charge 20% of the total cost
     if (role === UserRole.Customer && isTripExist.tripStatus == TripStatus.Confirmed) {
+
+        const stripeCustomerId = isTripExist.customer.stripeCustomerId ?? ""; 
+
+       
+        // const paymentIntent = await paymentService.authorizedPaymentWithSaveCardFromStripe({
+        //     tripId: isTripExist.id,
+        //     amount: isTripExist.totalCost * 0.2,
+        //     customerId: isTripExist.customerId,
+        //     paymentMethodId:paymentMethodId,
+        //     stripeCustomerId: isTripExist.customer.stripeCustomerId ?? "",
+        //     driverId: isTripExist.assignedDriverId ?? ""
+        // });
+        
+        // const res = await paymentService.capturePaymentRequestToStripe(paymentIntent.id);
+ 
         throw new ApiError(403, "You have to pay 20% of the total cost to cancel the trip");
     }
 
@@ -191,5 +210,5 @@ export const TripService = {
     getAllTrip,
     getTrip,
     updateTrip,
-    deleteTrip,
+    cancelTrip,
 }

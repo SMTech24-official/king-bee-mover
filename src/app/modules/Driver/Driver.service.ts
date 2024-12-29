@@ -163,8 +163,14 @@ const verifyDriver = async (id: string, files: Express.Multer.File[]) => {
     
     const payload: Record<string, string | boolean> = {};
     const values: Array<Express.Multer.File[]> = Object.values(files) as unknown as Array<Express.Multer.File[]>;
-    
+    const requiredFields = ["nationalIdFront", "nationalIdBack", "licenseFront", "licenseBack"];
+
+    // check if all required fields are uploaded
     for (const file of values) { 
+        if(!requiredFields.includes(file[0].fieldname)){
+            throw new ApiError(httpStatus.BAD_REQUEST, "Please upload all required fields");
+        }
+
         const { Location } = await fileUploader.uploadToDigitalOcean(file[0]);
         payload[file[0].fieldname] = Location;
     }

@@ -53,10 +53,10 @@ const updateTrip = catchAsync(async (req:Request, res:Response, next:NextFunctio
     });
 });
 
-const deleteTrip = catchAsync(async (req:Request, res:Response, next:NextFunction) => {
+const cancelTrip = catchAsync(async (req:Request, res:Response, next:NextFunction) => {
     const {id} = req.params;
     const {role} = req.user || {};
-    await TripService.deleteTrip(id, role);
+    await TripService.cancelTrip(id, role);
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
@@ -70,5 +70,5 @@ export const TripController = {
     getAllTrip,
     getTrip,
     updateTrip,
-    deleteTrip,
+    cancelTrip,
 }

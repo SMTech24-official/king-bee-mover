@@ -164,7 +164,8 @@ model Payment {
   customerId        String?
   stripeCustomerId  String?
   driverId          String?
-  tripId            String
+  tripId            String     @unique
+  paymentIntentId   String?    @unique  
   amount            Float
   status            String     // Pending, Completed, Failed 
   timestamp         DateTime   @default(now())

@@ -281,8 +281,6 @@ const verifyOtp = async (payload: { phoneNumber: string, otp: string }) => {
   return { phoneNumber };
 };
 
-
-
 export const AuthServices = {
   loginUser,
   registerUser,

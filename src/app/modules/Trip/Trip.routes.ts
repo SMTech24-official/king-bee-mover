@@ -32,8 +32,8 @@ router.patch("/:id",
 );
 
 router.delete("/:id",
-    // auth(UserRole.Customer, UserRole.Admin),
-    TripController.deleteTrip
+    auth(UserRole.Customer, UserRole.Admin),
+    TripController.cancelTrip
 );
 
 export const TripRoutes = router;
