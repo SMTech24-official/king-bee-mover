@@ -48,7 +48,7 @@ const assignDriverToTrip = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: "Driver trip application updated successfully",
+        message: "Driver assigned successfully to the trip",
         data: result,
     });
 })

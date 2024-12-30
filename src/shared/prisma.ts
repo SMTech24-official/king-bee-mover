@@ -7,7 +7,6 @@ async function connectPrisma() {
   try {
     await prisma.$connect();
     console.log("Prisma connected to the database successfully!"); 
-    
     // initiate super admin
     await initiateSuperAdmin();
 

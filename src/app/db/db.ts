@@ -5,8 +5,9 @@ export const initiateSuperAdmin = async () => {
   const payload: any = {
     email: "admin@gmail.com",
     phoneNumber: "1234567890",
-    password: "123456",
+    password: "12345678",
     role: UserRole.Admin,
+    fcmToken: "sdlfkjasdflsdjflsdl",
   };
 
   const isExistUser = !!await prisma.user.findUnique({

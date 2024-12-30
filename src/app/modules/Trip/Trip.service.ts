@@ -13,8 +13,16 @@ const createTrip = async (payload: Trip) => {
         where: { id: payload.customerId }
     })
 
+    const isTruckExist = await prisma.truck.findUnique({
+        where: { id: payload.truckId }
+    })
+
     if (!isCustomerExist) {
         throw new ApiError(httpStatus.NOT_FOUND, "Update your profile information first to create trips");
+    }
+
+    if (!isTruckExist) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Truck not found with the truck id");
     }
 
     const trip = await prisma.trip.create({

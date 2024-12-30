@@ -7,6 +7,7 @@ import { driverRoutes } from "../modules/Driver/Driver.routes";
 import { TripRoutes } from "../modules/Trip/Trip.routes";
 import { DriverTripApplicationRoutes } from "../modules/DriverTripApplication/DriverTripApplication.routes";
 import { paymentRoutes } from "../modules/Payment/Payment.routes";
+import { notificationsRoute } from "../modules/notifications/notification.routes";
 
 
 const router = express.Router();
@@ -43,6 +44,10 @@ const moduleRoutes = [
   {
     path: "/payment",
     route: paymentRoutes,
+  },
+  {
+    path: "/notification",
+    route: notificationsRoute,
   },
 ];
 

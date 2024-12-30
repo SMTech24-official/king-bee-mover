@@ -1,11 +1,11 @@
 // Payment.service: Module file for the Payment.service functionality.
 
 import { Customer, DriverTripApplicationStatus, Payment, TripStatus } from "@prisma/client";
-import prisma from "../../../shared/prisma"; 
+import prisma from "../../../shared/prisma";
 import { IStripeSaveWithCustomerInfo } from "./Payment.interface";
 import httpStatus from "http-status";
 import ApiError from "../../../errors/ApiErrors";
-import { isValidAmount } from "./Payment.utils"; 
+import { isValidAmount } from "./Payment.utils";
 import { stripe } from "../../../shared/stripe";
 
 
@@ -67,7 +67,6 @@ const authorizedPaymentWithSaveCardFromStripe = async (payload: {
   tripId: string;
   driverId: string;
 }) => {
-
   const { amount, customerId, paymentMethodId, stripeCustomerId, tripId, driverId } = payload;
   if (!isValidAmount(amount)) {
     throw new ApiError(
@@ -117,14 +116,11 @@ const authorizedPaymentWithSaveCardFromStripe = async (payload: {
       },
     })
   });
-
-
-
   return paymentIntent;
 };
 
 // Step 3: Capture the Payment
-const capturePaymentRequestToStripe = async ( paymentIntentId: string) => {
+const capturePaymentRequestToStripe = async (paymentIntentId: string) => {
 
   // Capture the authorized payment using the PaymentIntent ID
   const paymentIntent = await stripe.paymentIntents.capture(paymentIntentId);
@@ -177,31 +173,29 @@ const capturePaymentRequestToStripe = async ( paymentIntentId: string) => {
 
 // Step 4: Get Customer Saved Cards
 const getCustomerSavedCardsFromStripe = async (stripeCustomerId: string) => {
-   
-    // List all payment methods for the customer
-    const paymentMethods = await stripe.paymentMethods.list({
-      customer: stripeCustomerId,
-      type: "card",
-    });
 
-    return { paymentMethodId: paymentMethods.data[0].id };
-   
+  // List all payment methods for the customer
+  const paymentMethods = await stripe.paymentMethods.list({
+    customer: stripeCustomerId,
+    type: "card",
+  });
+
+  return { paymentMethodId: paymentMethods.data[0].id };
+
 };
 
 // Step 5: Refund amount to customer in the stripe
 const refundPaymentToCustomer = async (payload: {
   paymentIntentId: string;
 }) => {
-  try {
-    // Refund the payment intent
-    const refund = await stripe.refunds.create({
-      payment_intent: payload?.paymentIntentId,
-    });
 
-    return refund;
-  } catch (error: any) {
-    throw new ApiError(httpStatus.BAD_REQUEST, error.message);
-  }
+  // Refund the payment intent
+  const refund = await stripe.refunds.create({
+    payment_intent: payload?.paymentIntentId,
+  });
+
+  return refund;
+
 };
 
 export const paymentService = {
