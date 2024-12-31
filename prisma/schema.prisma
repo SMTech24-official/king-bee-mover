@@ -62,6 +62,8 @@ model Driver {
   insuranceFront    String?
   insuranceBack     String?
   totalEarnings     Float      @default(0) // Total earnings of the driver 
+  stripeAccountId   String?
+  stripeAccountLink String?
   accountStatus UserAccountStatus @default(Pending)  // Pending, Processing, Verified
 
   // Relationships
@@ -177,6 +179,7 @@ model Payment {
   id                String     @id @default(uuid()) @map("_id")
   customerId        String?
   stripeCustomerId  String?
+
   driverId          String?
   tripId            String     @unique
   paymentIntentId   String?    @unique  

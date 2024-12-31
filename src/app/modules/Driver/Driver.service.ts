@@ -6,6 +6,8 @@ import { fileUploader } from "../../../helpars/fileUploader";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import { paginationHelper } from "../../../helpars/paginationHelper";
 import { IDriverSearchFields } from "./Driver.interface";
+import { stripe } from "../../../shared/stripe";
+import config from "../../../config";
 
 const createDriver = async (data: Driver, file: Express.Multer.File) => {
     const doesUserExist = await prisma.user.findUnique({
@@ -29,12 +31,43 @@ const createDriver = async (data: Driver, file: Express.Multer.File) => {
     }
 
     const { Location } = await fileUploader.uploadToDigitalOcean(file);
-
     data.profileImage = Location;
+    try {
+         // Create a Stripe Connect account
+         const stripeAccount = await stripe.accounts.create({
+            type: 'express', // Use 'express' for faster onboarding with Stripe Express accounts
+            country: 'US', // Replace with the appropriate country code
+            email: doesUserExist.email,
+            metadata: {
+              userId: doesUserExist.id,
+            },
+            capabilities: {
+              card_payments: { requested: true },
+              transfers: { requested: true },
+            },            
+          });
+  
+          // Generate the onboarding link for the Stripe Express account
+          const accountLink = await stripe.accountLinks.create({
+            account: stripeAccount.id,
+            refresh_url: `${config.frontend_base_url}/reauthenticate`, // Replace with your frontend URL for reauthentication
+            return_url: `${config.frontend_base_url}/onboarding-success`, // Replace with your frontend success URL
+            type: 'account_onboarding',
+          });
+  
+          const stripeAccountId = stripeAccount.id;
+          data.stripeAccountId = stripeAccountId;
+          data.stripeAccountLink = accountLink.url;
 
+    } catch (err) {
+        console.error('Stripe Error:', err); // Log the error for debugging
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to create Stripe account");
+    }
+    
     const driver = await prisma.driver.create({
         data: data,
     });
+
     return driver;
 }
 

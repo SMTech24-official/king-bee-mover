@@ -8,6 +8,7 @@ export default {
     stripe_key:process.env.STRIPE_SECRET_KEY,
     port: process.env.PORT,
     bcrypt_salt_rounds:process.env.BCRYPT_SALT_ROUNDS,
+    frontend_base_url: process.env.FRONTEND_BASE_URL,
     jwt: {
         jwt_secret: process.env.JWT_SECRET,
         expires_in: process.env.EXPIRES_IN,

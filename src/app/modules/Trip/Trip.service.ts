@@ -6,6 +6,8 @@ import { IPaginationOptions } from "../../../interfaces/paginations";
 import { paginationHelper } from "../../../helpars/paginationHelper";
 import { ITripSearchFields } from "./Trip.interface";
 import { tripSearchableFields } from "./Trip.constant"; 
+import { paymentService } from "../Payment/Payment.service";
+import { stripe } from "../../../shared/stripe";
 
 const createTrip = async (payload: Trip) => {
 
@@ -175,7 +177,6 @@ const updateTrip = async (id: string, payload: Partial<Trip>) => {
 }
 
 const cancelTrip = async (id: string, role: UserRole) => {
-
     const isTripExist = await prisma.trip.findUnique({ 
         where: { id },
         include: {
@@ -191,8 +192,34 @@ const cancelTrip = async (id: string, role: UserRole) => {
     if (role === UserRole.Customer && isTripExist.tripStatus == TripStatus.Confirmed) {
 
         const stripeCustomerId = isTripExist.customer.stripeCustomerId ?? ""; 
+        const amount = isTripExist.totalCost * 0.2;
 
-       
+        const trip = await prisma.trip.findUnique({
+            where: { id },
+            include: {
+                payments: {
+                    select: {
+                     paymentIntentId: true,
+                     stripePaymentMethodId: true
+                    }
+                }
+            }
+        })
+
+        await paymentService.refundPaymentToCustomer({
+            paymentIntentId: trip?.payments[0]?.paymentIntentId ?? ""
+        })
+
+        const paymentIntent =  await stripe.paymentIntents.create({
+            amount: amount * 100,
+            currency: "usd",
+            customer: stripeCustomerId,
+            payment_method: trip?.payments[0]?.stripePaymentMethodId ?? "",
+            off_session: true,
+            confirm: true,
+            capture_method: "manual",
+        })
+ 
         // const paymentIntent = await paymentService.authorizedPaymentWithSaveCardFromStripe({
         //     tripId: isTripExist.id,
         //     amount: isTripExist.totalCost * 0.2,

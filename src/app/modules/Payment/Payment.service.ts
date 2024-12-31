@@ -57,7 +57,6 @@ const saveCardWithCustomerInfoIntoStripe = async (
   };
 }
 
-
 // Step 2: Authorize the Payment Using Saved Card
 const authorizedPaymentWithSaveCardFromStripe = async (payload: {
   amount: number;
@@ -188,14 +187,12 @@ const getCustomerSavedCardsFromStripe = async (stripeCustomerId: string) => {
 const refundPaymentToCustomer = async (payload: {
   paymentIntentId: string;
 }) => {
-
   // Refund the payment intent
   const refund = await stripe.refunds.create({
     payment_intent: payload?.paymentIntentId,
   });
 
   return refund;
-
 };
 
 export const paymentService = {
