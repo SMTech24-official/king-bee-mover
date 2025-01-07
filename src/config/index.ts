@@ -8,6 +8,7 @@ export default {
     stripe_key:process.env.STRIPE_SECRET_KEY,
     port: process.env.PORT,
     bcrypt_salt_rounds:process.env.BCRYPT_SALT_ROUNDS,
+    frontend_base_url: process.env.FRONTEND_BASE_URL,
     jwt: {
         jwt_secret: process.env.JWT_SECRET,
         expires_in: process.env.EXPIRES_IN,
@@ -21,6 +22,11 @@ export default {
         email: process.env.EMAIL,
         app_pass: process.env.APP_PASS
     },
-
+    twilio: {
+        account_sid: process.env.TWILIO_ACCOUNT_SID,
+        auth_token: process.env.TWILIO_AUTH_TOKEN,
+        phone_number: process.env.TWILIO_PHONE_NUMBER,
+        verify_service_sid: process.env.TWILIO_VERIFY_SERVICE_SID
+    }
 }
  

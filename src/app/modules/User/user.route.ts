@@ -6,25 +6,17 @@ import auth from "../../middlewares/auth";
 import { UserRole } from "@prisma/client";
 
 const router = express.Router();
-
-// *!register user
-router.post(
-  "/register",
-  validateRequest(UserValidation.CreateUserValidationSchema),
-  userController.createUser
-);
+ 
 // *!get all  user
-router.get("/", userController.getUsers);
-
-// *!profile user
-router.put(
-  "/profile",
-  validateRequest(UserValidation.userUpdateSchema),
-  auth(UserRole.ADMIN, UserRole.USER),
-  userController.updateProfile
-);
+router.get("/", 
+    auth(UserRole.Admin),
+     userController.getUsers
+    );
 
 // *!update  user
-router.put("/:id", userController.updateUser);
+router.patch("/:id", 
+    auth(UserRole.Admin, UserRole.Customer, UserRole.Driver),
+    validateRequest(UserValidation.UserUpdateValidationSchema), 
+    userController.updateUser);
 
 export const userRoutes = router;

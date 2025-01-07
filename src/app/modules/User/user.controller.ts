@@ -20,7 +20,6 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
 
 // get all user form db
 const getUsers = catchAsync(async (req: Request, res: Response) => {
-
   const filters = pick(req.query, userFilterableFields);
   const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
 
@@ -34,24 +33,11 @@ const getUsers = catchAsync(async (req: Request, res: Response) => {
 });
 
 
-// get all user form db
-const updateProfile = catchAsync(async (req: Request & {user?:any}, res: Response) => {
-  const user = req?.user;
-
-  const result = await userService.updateProfile(user, req.body);
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Profile updated successfully!",
-    data: result,
-  });
-});
-
-
-// *! update user role and account status
+// update user information specialy user role
 const updateUser = catchAsync(async (req: Request, res: Response) => {
-const id = req.params.id;
-  const result = await userService.updateUserIntoDb( req.body,id);
+  const id = req.params.id;
+
+  const result = await userService.updateUser(id, req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -62,7 +48,6 @@ const id = req.params.id;
 
 export const userController = {
   createUser,
-  getUsers,
-  updateProfile,
+  getUsers, 
   updateUser
 };

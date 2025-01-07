@@ -2,8 +2,7 @@ import { Request, Response } from "express";
 import catchAsync from "../../../shared/catchAsync";
 import { AuthServices } from "./auth.service";
 import sendResponse from "../../../shared/sendResponse";
-import httpStatus from "http-status";
-import { string } from "zod";
+import httpStatus from "http-status"; 
 
 const loginUser = catchAsync(async (req: Request, res: Response) => {
 
@@ -16,6 +15,18 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
+const registerUser = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthServices.registerUser(req.body);
+  res.cookie("token", result.token, { httpOnly: true }); 
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "User registered successfully",
+    data: result,
+  });
+});
+
 const logoutUser = catchAsync(async (req: Request, res: Response) => {
   // Clear the token cookie
   res.clearCookie("token", {
@@ -32,18 +43,6 @@ const logoutUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// get user profile
-const getMyProfile = catchAsync(async (req: Request, res: Response) => {
-  const userToken = req.headers.authorization;
-
-  const result = await AuthServices.getMyProfile(userToken as string);
-  sendResponse(res, {
-    success: true,
-    statusCode: 201,
-    message: "User profile retrieved successfully",
-    data: result,
-  });
-});
 
 // change password
 const changePassword = catchAsync(async (req: Request, res: Response) => {
@@ -66,9 +65,8 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
 
 // forgot password
 const forgotPassword = catchAsync(async (req: Request, res: Response) => {
-
-  await AuthServices.forgotPassword(req.body);
-
+  const {email} = req.body;
+  await AuthServices.forgotPassword(email);
   sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
@@ -91,13 +89,38 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   })
 });
 
+const sendOtp = catchAsync(async (req: Request, res: Response) => {
+  const {phoneNumber} = req.body; 
+  const result = await AuthServices.sendOtp(phoneNumber);
 
+  sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "otp send to the user mobile number",
+      data: result
+  })
+});
+
+const verifyOtp = catchAsync(async (req: Request, res: Response) => {
+  const payload = req.body; 
+  console.log("payload", payload);
+  const result = await AuthServices.verifyOtp(payload);
+
+  sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "otp verified successfully",
+      data: result
+  })
+});
 
 export const AuthController = {
   loginUser,
   logoutUser,
-  getMyProfile,
   changePassword,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  registerUser,
+  sendOtp,
+  verifyOtp
 };

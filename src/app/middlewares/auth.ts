@@ -11,12 +11,11 @@ import prisma from "../../shared/prisma";
 const auth = (...roles: string[]) => {
   return async (
     req: Request & { user?: any },
-    res: Response,
+    _res: Response,
     next: NextFunction
   ) => {
     try {
-      const token = req.headers.authorization;
-
+      const token = req.headers.authorization; 
       if (!token) {
         throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized!");
       }
@@ -25,6 +24,7 @@ const auth = (...roles: string[]) => {
         token,
         config.jwt.jwt_secret as Secret
       );
+      
       const { id, role, iat } = verifiedUser;
 
       const user = await prisma.user.findUnique({
@@ -36,9 +36,9 @@ const auth = (...roles: string[]) => {
         throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
       }
 
-      if (user.status === "BLOCKED") {
-        throw new ApiError(httpStatus.FORBIDDEN, "Your account is blocked!");
-      }
+      // if (user.status === "BLOCKED") {
+      //   throw new ApiError(httpStatus.FORBIDDEN, "Your account is blocked!");
+      // }
 
       req.user = verifiedUser as JwtPayload;
 
