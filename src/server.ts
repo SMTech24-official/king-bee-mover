@@ -1,13 +1,11 @@
 import { Server } from "http";
 import config from "./config";
-
 import app from "./app";
-
 let server: Server;
 
 async function startServer() {
   server = app.listen(config.port, () => {
-    console.log("Server is listiening on port ", config.port);
+    console.log("Server is listiening on port", config.port);
   });
 }
 
