@@ -1,2 +1,2 @@
 
-export const driverFilterableFields = ["accountStatus"]; 
+export const driverFilterableFields = ["accountStatus", "searchTerm"]; 

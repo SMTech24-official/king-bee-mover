@@ -65,7 +65,8 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
 
 // forgot password
 const forgotPassword = catchAsync(async (req: Request, res: Response) => {
-  await AuthServices.forgotPassword(req.body);
+  const {email} = req.body;
+  await AuthServices.forgotPassword(email);
   sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
@@ -102,6 +103,7 @@ const sendOtp = catchAsync(async (req: Request, res: Response) => {
 
 const verifyOtp = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body; 
+  console.log("payload", payload);
   const result = await AuthServices.verifyOtp(payload);
 
   sendResponse(res, {

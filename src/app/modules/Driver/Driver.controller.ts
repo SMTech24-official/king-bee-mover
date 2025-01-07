@@ -25,7 +25,7 @@ const createDriver = catchAsync(
 
 
 // get all driver
-const getAllDriver = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+const getAllDriver = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
     const filters = pick(req.query, driverFilterableFields);
     const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
 
@@ -39,7 +39,7 @@ const getAllDriver = catchAsync(async (req: Request, res: Response, next: NextFu
 });
 
 // get a driver
-const getDriver = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+const getDriver = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
     const { id } = req.params;
     const result = await DriverService.getDriver(id);
     sendResponse(res, {
@@ -52,7 +52,7 @@ const getDriver = catchAsync(async (req: Request, res: Response, next: NextFunct
 
 
 // update a driver
-const updateDriver = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+const updateDriver = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
     const { id } = req.params;
     const driverData = req.body;
     const result = await DriverService.updateDriver(id, driverData);
@@ -65,7 +65,7 @@ const updateDriver = catchAsync(async (req: Request, res: Response, next: NextFu
 });
 
 // delete a driver
-const deleteDriver = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+const deleteDriver = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
     const { id } = req.params;
     await DriverService.deleteDriver(id);
     sendResponse(res, {
@@ -79,7 +79,7 @@ const deleteDriver = catchAsync(async (req: Request, res: Response, next: NextFu
 // verify a driver
 const verifyDriver = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
     const files = req.files as Express.Multer.File[];
-    const {id} = req.params;
+    const { id } = req.params;
     const result = await DriverService.verifyDriver(id, files);
     sendResponse(res, {
         statusCode: httpStatus.OK,
@@ -90,6 +90,30 @@ const verifyDriver = catchAsync(async (req: Request, res: Response, _next: NextF
 });
 
 
+// get driver account finance
+const getDriverAccountFinance = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const { stripeAccountId } = req.params;
+    const result = await DriverService.getDriverAccountFinance(stripeAccountId);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Driver account financials fetched successfully',
+        data: result,
+    });
+});
+
+
+const regenerateOnboardingLink = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
+    const { stripeAccountId } = req.params;
+    const result = await DriverService.regenerateOnboardingLink(stripeAccountId);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Driver account onboarding link generated successfully',
+        data: result,
+    });
+});
+
 
 export const DriverController = {
     createDriver,
@@ -98,4 +122,6 @@ export const DriverController = {
     updateDriver,
     deleteDriver,
     verifyDriver,
+    getDriverAccountFinance, 
+    regenerateOnboardingLink
 }

@@ -1,3 +1,4 @@
+import { stripe } from "../../../shared/stripe";
 
 export function isValidAmount(amount: any): boolean {
     // Check if the value is a number and is finite
@@ -7,3 +8,5 @@ export function isValidAmount(amount: any): boolean {
     }
     return false;
   }
+
+  

@@ -32,38 +32,38 @@ const createDriver = async (data: Driver, file: Express.Multer.File) => {
 
     const { Location } = await fileUploader.uploadToDigitalOcean(file);
     data.profileImage = Location;
+
     try {
-         // Create a Stripe Connect account
-         const stripeAccount = await stripe.accounts.create({
+        // Create a Stripe Connect account
+        const stripeAccount = await stripe.accounts.create({
             type: 'express', // Use 'express' for faster onboarding with Stripe Express accounts
             country: 'US', // Replace with the appropriate country code
             email: doesUserExist.email,
             metadata: {
-              userId: doesUserExist.id,
+                userId: doesUserExist.id,
             },
             capabilities: {
-              card_payments: { requested: true },
-              transfers: { requested: true },
-            },            
-          });
-  
-          // Generate the onboarding link for the Stripe Express account
-          const accountLink = await stripe.accountLinks.create({
+                card_payments: { requested: true },
+                transfers: { requested: true },
+            },
+        });
+
+        // Generate the onboarding link for the Stripe Express account
+        const accountLink = await stripe.accountLinks.create({
             account: stripeAccount.id,
             refresh_url: `${config.frontend_base_url}/reauthenticate`, // Replace with your frontend URL for reauthentication
             return_url: `${config.frontend_base_url}/onboarding-success`, // Replace with your frontend success URL
             type: 'account_onboarding',
-          });
-  
-          const stripeAccountId = stripeAccount.id;
-          data.stripeAccountId = stripeAccountId;
-          data.stripeAccountLink = accountLink.url;
+        });
+        const stripeAccountId = stripeAccount.id;
+        data.stripeAccountId = stripeAccountId;
+        data.stripeAccountLink = accountLink.url;
 
     } catch (err) {
         console.error('Stripe Error:', err); // Log the error for debugging
         throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to create Stripe account");
     }
-    
+
     const driver = await prisma.driver.create({
         data: data,
     });
@@ -71,12 +71,13 @@ const createDriver = async (data: Driver, file: Express.Multer.File) => {
     return driver;
 }
 
-const getAllDriver = async (options: IPaginationOptions, params:IDriverSearchFields ) => {
+const getAllDriver = async (options: IPaginationOptions, params: IDriverSearchFields) => {
     const { page, limit, skip } = paginationHelper.calculatePagination(options);
     const { searchTerm, ...filterData } = params;
     const andCondions: Prisma.DriverWhereInput[] = [];
+ 
 
-    if(searchTerm){
+    if (searchTerm) {
         andCondions.push({
             OR: ["name"].map((field) => ({
                 [field]: { contains: searchTerm, mode: "insensitive" },
@@ -84,7 +85,7 @@ const getAllDriver = async (options: IPaginationOptions, params:IDriverSearchFie
         });
     }
 
-    if(Object.keys(filterData).length > 0){
+    if (Object.keys(filterData).length > 0) {
         andCondions.push({
             AND: Object.keys(filterData).map((key) => ({
                 [key]: { equals: (filterData as any)[key] },
@@ -106,7 +107,7 @@ const getAllDriver = async (options: IPaginationOptions, params:IDriverSearchFie
                 : {
                     createdAt: "desc",
                 },
-    }); 
+    });
 
     // get total count of drivers
     const total = await prisma.driver.count({
@@ -133,7 +134,7 @@ const updateDriver = async (id: string, data: Partial<Omit<Driver, "userId" | "i
         where: { id },
     });
 
-    if(!isDriverExist){
+    if (!isDriverExist) {
         throw new ApiError(httpStatus.NOT_FOUND, "Driver not found");
     }
 
@@ -144,17 +145,17 @@ const updateDriver = async (id: string, data: Partial<Omit<Driver, "userId" | "i
     return driver;
 }
 
-const deleteDriver = async (id: string) => { 
+const deleteDriver = async (id: string) => {
     const isDriverExist = await prisma.driver.findUnique({
         where: {
             id: id,
         },
     });
 
-    if(!isDriverExist){
+    if (!isDriverExist) {
         throw new ApiError(httpStatus.NOT_FOUND, "Driver not found");
     }
-    
+
     // delete from driver and user table
     await prisma.$transaction(async (tx) => {
         // delete driver
@@ -178,9 +179,9 @@ const getDriver = async (id: string) => {
         }
     });
 
-    if(!isDriverExist){
+    if (!isDriverExist) {
         throw new ApiError(httpStatus.NOT_FOUND, "Driver not found");
-    }   
+    }
 
     const driver = await prisma.driver.findUnique({
         where: { id },
@@ -193,14 +194,14 @@ const getDriver = async (id: string) => {
 }
 
 const verifyDriver = async (id: string, files: Express.Multer.File[]) => {
-    
+
     const payload: Record<string, string | boolean> = {};
     const values: Array<Express.Multer.File[]> = Object.values(files) as unknown as Array<Express.Multer.File[]>;
     const requiredFields = ["nationalIdFront", "nationalIdBack", "licenseFront", "licenseBack"];
 
     // check if all required fields are uploaded
-    for (const file of values) { 
-        if(!requiredFields.includes(file[0].fieldname)){
+    for (const file of values) {
+        if (!requiredFields.includes(file[0].fieldname)) {
             throw new ApiError(httpStatus.BAD_REQUEST, "Please upload all required fields");
         }
 
@@ -208,15 +209,51 @@ const verifyDriver = async (id: string, files: Express.Multer.File[]) => {
         payload[file[0].fieldname] = Location;
     }
 
-    const driver =  await prisma.driver.update({
+    const driver = await prisma.driver.update({
         where: { id },
         data: {
-            ...payload, 
+            ...payload,
             accountStatus: UserAccountStatus.Processing,
         },
     });
-    return driver;   
+    return driver;
 }
+
+const getDriverAccountFinance = async (stripeAccountId: string) => {
+    try {
+        // Retrieve balance for the connected account
+        const balance = await stripe.balance.retrieve({
+            stripeAccount: stripeAccountId,
+        });
+
+        // Calculate available and pending amounts
+        const available = balance.available.reduce((sum, entry) => sum + entry.amount, 0) / 100; // Convert cents to dollars
+        const pending = balance.pending.reduce((sum, entry) => sum + entry.amount, 0) / 100; // Convert cents to dollars
+
+        // Assuming wallet payments (payments completed but not withdrawn) are the available balance
+        const walletPayments = available;
+
+        // Total earnings would typically be the sum of available, pending, and payouts already made
+        const totalEarnings = available + pending;
+
+        return { totalEarnings, awaitingPayments: pending, walletPayments };
+    } catch (error) {
+        console.error('Error retrieving account financials:', error);
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error retrieving account financials');
+    }
+}
+
+const regenerateOnboardingLink = async (stripeAccountId:string) => {
+    const accountLink = await stripe.accountLinks.create({
+        account: stripeAccountId,
+        refresh_url: `${config.frontend_base_url}/reauthenticate`,
+        return_url: `${config.frontend_base_url}/onboarding-success`,
+        type: 'account_onboarding',
+    });
+
+    console.log('Account Onboarding Link:', accountLink.url);
+    return accountLink.url;
+};
 
 export const DriverService = {
     createDriver,
@@ -225,4 +262,6 @@ export const DriverService = {
     getDriver,
     getAllDriver,
     verifyDriver,
+    getDriverAccountFinance, 
+    regenerateOnboardingLink
 }

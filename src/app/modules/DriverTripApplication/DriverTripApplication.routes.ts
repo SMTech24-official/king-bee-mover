@@ -11,25 +11,25 @@ import auth from "../../middlewares/auth";
 const router = Router();
 
 router.post("/",
-    // auth(UserRole.Driver),
+    auth(UserRole.Driver),
     validateRequest(DriverTripApplicationValidation.createDriverTripApplicationValidation),
     DriverTripApplicationController.createDriverTripApplication);
 
 router.get("/",
-    // auth(UserRole.Admin),
+    auth(UserRole.Admin),
     DriverTripApplicationController.getAllDriverTripApplication);
 
 router.get("/:id",
-    // auth(UserRole.Admin, UserRole.Driver),
+    auth(UserRole.Admin, UserRole.Driver),
     DriverTripApplicationController.getDriverTripApplication);
 
 router.patch("/:id",
-    // auth(UserRole.Admin),
+    auth(UserRole.Admin),
     validateRequest(DriverTripApplicationValidation.assignDriverToTripValidation),
     DriverTripApplicationController.assignDriverToTrip);
 
 router.delete("/:id",
-    // auth(UserRole.Admin),
+    auth(UserRole.Admin),
     DriverTripApplicationController.deleteDriverTripApplication);
 
 export const DriverTripApplicationRoutes = router;

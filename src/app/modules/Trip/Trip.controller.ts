@@ -65,10 +65,22 @@ const cancelTrip = catchAsync(async (req:Request, res:Response, next:NextFunctio
     });
 });
 
+
+const tripSummary = catchAsync(async (req:Request, res:Response, next:NextFunction) => {
+    const result = await TripService.tripSummary();
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Trip summary fetched successfully',
+        data: result,
+    });
+});
+
 export const TripController = {
     createTrip,
     getAllTrip,
     getTrip,
     updateTrip,
     cancelTrip,
+    tripSummary
 }

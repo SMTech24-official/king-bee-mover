@@ -9,17 +9,17 @@ datasource db {
 
 // User model
 model User {
-  id            String      @id @default(uuid()) @map("_id")
-  email         String      @unique
-  password      String
-  phoneNumber   String      @unique
-  role          UserRole      @default(Customer) // Admin, Customer, Driver
-  createdBy     UserCreatedBy @default(Manual)   // Social, Manual
-  fcmToken      String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  email       String        @unique
+  password    String
+  phoneNumber String        @unique
+  role        UserRole      @default(Customer) // Admin, Customer, Driver
+  createdBy   UserCreatedBy @default(Manual) // Social, Manual
+  fcmToken    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  drivers Driver[]
+  drivers   Driver[]
   customers Customer[]
 
   @@map("users")
@@ -27,8 +27,9 @@ model User {
 
 // otp model 
 model OTP {
-  id          String   @id @default(uuid()) @map("_id")
-  phoneNumber String   @unique
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  phoneNumber String?   @unique
+  email       String?   @unique
   otpCode     String
   expiry      DateTime
 
@@ -37,78 +38,80 @@ model OTP {
 
 // notifications model
 model Notifications {
-  id          String   @id @default(uuid()) @map("_id")
-  receiverId  String
-  title       String
-  body        String
-  read        Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  receiverId String?
+  senderId   String?
+  title      String
+  body       String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@map("notifications")
 }
 
 // Driver model
 model Driver {
-  id                String     @id @default(uuid()) @map("_id")
-  userId            String     @unique
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String            @unique @db.ObjectId
   name              String
   profileImage      String
   nationalIdFront   String?
   nationalIdBack    String?
   licenseFront      String?
   licenseBack       String?
-  insurance         Boolean   @default(false)
+  insurance         Boolean           @default(false)
   insuranceFront    String?
   insuranceBack     String?
-  totalEarnings     Float      @default(0) // Total earnings of the driver 
-  stripeAccountId   String?
+  totalEarnings     Float             @default(0) //Total earnings of the driver 
+  stripeAccountId   String?           @unique
   stripeAccountLink String?
-  accountStatus UserAccountStatus @default(Pending)  // Pending, Processing, Verified
+  accountStatus     UserAccountStatus @default(Pending) // Pending, Processing, Verified
 
   // Relationships
-  user              User       @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  trips             Trip[]
+  trips                  Trip[]
   driverTripApplications DriverTripApplication[]
-  payments          Payment[]
+  payments               Payment[]
 
   @@map("drivers")
 }
 
 // Customer model
 model Customer {
-  id           String     @id @default(uuid()) @map("_id")
-  userId       String     @unique
-  name         String
-  profileImage String
-  companyName  String?
-  accountStatus UserAccountStatus @default(Verified)  // Pending, Processing, Verified
-  stripeCustomerId  String?
-  
+  id               String            @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String            @unique @db.ObjectId
+  name             String
+  profileImage     String
+  companyName      String?
+  accountStatus    UserAccountStatus @default(Verified) // Pending, Processing, Verified
+  stripeCustomerId String?           @unique
+  paymentMethodId  String?
+
   // Relationships
-  user         User       @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  trips        Trip[]
-  payments     Payment[]
+  trips    Trip[]
+  payments Payment[]
 
   @@map("customers")
 }
 
 // Trip model
 model Trip {
-  id                String     @id @default(uuid()) @map("_id")
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
   loadLocation      String
   unloadLocation    String
-  customerId        String
-  truckId           String 
-  truck             Truck    @relation(fields: [truckId], references: [id])
+  customerId        String            @db.ObjectId
+  truckId           String            @db.ObjectId
+  truck             Truck             @relation(fields: [truckId], references: [id])
   date              DateTime
   time              String
   productType       String
@@ -117,85 +120,94 @@ model Trip {
   totalCost         Float
   distance          Float
   weight            Float
-  tripStatus        TripStatus @default(Pending) 
+  tripStatus        TripStatus        @default(Pending)
+
   // Completed, Pending, Assigned, Cancelled, Confirmed
-  assignedDriverId  String?
-  tags              String[]
-  cancellationReason String? 
+  assignedDriverId   String?  @db.ObjectId
+  tags               String[]
+  cancellationReason String?
 
   // Relationships
-  customer          Customer   @relation(fields: [customerId], references: [id])
-  driver            Driver?    @relation(fields: [assignedDriverId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+  driver   Driver?  @relation(fields: [assignedDriverId], references: [id])
 
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   driverTripApplications DriverTripApplication[]
-  payments          Payment[]
+  payments               Payment[]
 
   @@map("trips")
 }
 
 // Truck model
 model Truck {
-  id                String     @id @default(uuid()) @map("_id")
-  name              String
-  image             String
-  length            Float
-  width             Float
-  height            Float 
-  type              String
-  capacity          Float
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  image     String
+  length    Float
+  width     Float
+  height    Float
+  type      String
+  capacity  Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  trips             Trip[]
+  trips Trip[]
 
   @@map("trucks")
 }
 
 // DriverTripApplication model
 model DriverTripApplication {
-  id                String     @id @default(uuid()) @map("_id")
-  tripId            String    
-  driverId          String
-  // Relationships
-  trip              Trip       @relation(fields: [tripId], references: [id])
-  driver            Driver     @relation(fields: [driverId], references: [id])
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  tripId   String @db.ObjectId
+  driverId String @db.ObjectId
 
-  status            DriverTripApplicationStatus     @default(Applied) 
+  // Relationships
+  trip   Trip   @relation(fields: [tripId], references: [id])
+  driver Driver @relation(fields: [driverId], references: [id])
+
+  status DriverTripApplicationStatus @default(Applied)
   // Applied, Assigned, Rejected, Cancelled, Confirmed, Completed
 
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tripId, driverId])
-
   @@map("driver_trip_applications")
 }
 
 // Payment model
 model Payment {
-  id                String     @id @default(uuid()) @map("_id")
-  customerId        String?
-  stripeCustomerId  String?
+  id               String  @id @default(auto()) @map("_id") @db.ObjectId
+  customerId       String? @db.ObjectId
+  stripeCustomerId String?
 
-  driverId          String?
-  tripId            String     @unique
-  paymentIntentId   String?    @unique  
-  amount            Float
-  status            String     // Pending, Completed, Failed 
-  timestamp         DateTime   @default(now())
-  
+  driverId             String?       @db.ObjectId
+  tripId               String        @unique @db.ObjectId
+  paymentIntentId      String?       @unique
+  paymentMethodId      String?
+  amount               Float
+  applicationFeeAmount Float?
+  status               PaymentStatus @default(Pending) // Pending, Completed, Cencelled 
+  timestamp            DateTime      @default(now())
+
   // Relationships
-  customer          Customer?  @relation(fields: [customerId], references: [id])
-  driver            Driver?    @relation(fields: [driverId], references: [id])
-  trip              Trip       @relation(fields: [tripId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id])
+  driver   Driver?   @relation(fields: [driverId], references: [id])
+  trip     Trip      @relation(fields: [tripId], references: [id])
 
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("payments")
+}
+
+enum PaymentStatus {
+  Pending
+  Confirmed
+  Cancelled
 }
 
 enum DriverTripApplicationStatus {

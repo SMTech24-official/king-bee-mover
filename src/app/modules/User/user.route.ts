@@ -9,16 +9,14 @@ const router = express.Router();
  
 // *!get all  user
 router.get("/", 
-    // auth(UserRole.Admin),
+    auth(UserRole.Admin),
      userController.getUsers
     );
 
 // *!update  user
 router.patch("/:id", 
-    // auth(UserRole.Admin, UserRole.Customer, UserRole.Driver),
+    auth(UserRole.Admin, UserRole.Customer, UserRole.Driver),
     validateRequest(UserValidation.UserUpdateValidationSchema), 
     userController.updateUser);
- 
-
 
 export const userRoutes = router;

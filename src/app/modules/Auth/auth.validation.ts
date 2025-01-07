@@ -61,13 +61,16 @@ const SendOtpValidationSchema = z.object({
 const VerifyOtpValidationSchema = z.object({
   body: z.object({
     phoneNumber: z
-      .string({ required_error: "Phone number is required" })
+      .string()
       .min(10, {
         message: 'Phone number must be at least 10 characters',
-      }),
-    // .refine(value => /^\+?1?\d{10}$/g.test(value), {    // check USA phone number format
-    //   message: 'Invalid USA phone number format',
-    // }),
+      }).optional(),
+      
+      // .refine(value => /^\+?1?\d{10}$/g.test(value), {    // check USA phone number format
+      //   message: 'Invalid USA phone number format',
+      // }),
+
+    email:z.string().email().optional(),
 
     otp: z
       .string({ required_error: "OTP is required" })

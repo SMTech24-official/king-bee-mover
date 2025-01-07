@@ -1,11 +1,11 @@
-import { DriverTripApplicationStatus, Prisma, Trip, TripStatus, UserRole } from "@prisma/client";
+import { DriverTripApplicationStatus, PaymentStatus, Prisma, Trip, TripStatus, UserRole } from "@prisma/client";
 import prisma from "../../../shared/prisma";
 import httpStatus from "http-status";
 import ApiError from "../../../errors/ApiErrors";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import { paginationHelper } from "../../../helpars/paginationHelper";
 import { ITripSearchFields } from "./Trip.interface";
-import { tripSearchableFields } from "./Trip.constant"; 
+import { tripSearchableFields } from "./Trip.constant";
 import { paymentService } from "../Payment/Payment.service";
 import { stripe } from "../../../shared/stripe";
 
@@ -25,6 +25,10 @@ const createTrip = async (payload: Trip) => {
 
     if (!isTruckExist) {
         throw new ApiError(httpStatus.NOT_FOUND, "Truck not found with the truck id");
+    }
+
+    if(!isCustomerExist.stripeCustomerId){
+        throw new ApiError(httpStatus.BAD_REQUEST, "add payment card first to create trip");
     }
 
     const trip = await prisma.trip.create({
@@ -60,7 +64,7 @@ const getAllTrip = async (options: IPaginationOptions, params: ITripSearchFields
                         },
                     };
                 } else {
-                    if(key === "driverId"){
+                    if (key === "driverId") {
                         return {
                             driver: {
                                 id: (filterData as any)[key]
@@ -122,7 +126,7 @@ const getTrip = async (id: string) => {
     const trip = await prisma.trip.findUnique({
         where: { id },
         include: {
-            driverTripApplications: true
+            driverTripApplications: true, 
         }
     });
     return trip;
@@ -132,6 +136,7 @@ const updateTrip = async (id: string, payload: Partial<Trip>) => {
     const isTripExist = await prisma.trip.findUnique({
         where: { id }
     });
+
     if (!isTripExist) {
         throw new ApiError(404, "Trip not found");
     }
@@ -142,7 +147,7 @@ const updateTrip = async (id: string, payload: Partial<Trip>) => {
         || payload.tripStatus === TripStatus.Completed) {
 
         const res = await prisma.$transaction(async (tx) => {
-           
+
             const trip = await tx.trip.update({
                 where: { id },
                 data: payload
@@ -161,7 +166,7 @@ const updateTrip = async (id: string, payload: Partial<Trip>) => {
                             DriverTripApplicationStatus.Completed : DriverTripApplicationStatus.Confirmed
                 }
             })
-            
+
             return trip;
         })
 
@@ -176,69 +181,106 @@ const updateTrip = async (id: string, payload: Partial<Trip>) => {
     return trip;
 }
 
-const cancelTrip = async (id: string, role: UserRole) => {
-    const isTripExist = await prisma.trip.findUnique({ 
+const cancelTrip = async (id: string, role: UserRole, cancelReason?: string) => {
+    const isTripExist = await prisma.trip.findUnique({
         where: { id },
         include: {
-            customer: true
+            customer: true  
         }
     });
 
     if (!isTripExist) {
         throw new ApiError(404, "Trip not found");
     }
-
+ 
     // check if the trip is confirmed and the user is customer then charge 20% of the total cost
     if (role === UserRole.Customer && isTripExist.tripStatus == TripStatus.Confirmed) {
-
-        const stripeCustomerId = isTripExist.customer.stripeCustomerId ?? ""; 
-        const amount = isTripExist.totalCost * 0.2;
-
-        const trip = await prisma.trip.findUnique({
-            where: { id },
-            include: {
-                payments: {
-                    select: {
-                     paymentIntentId: true,
-                     stripePaymentMethodId: true
-                    }
-                }
+        const payment = await prisma.payment.findUnique({
+            where: { tripId: isTripExist.id },
+            select: {
+                paymentIntentId: true
             }
         })
 
-        await paymentService.refundPaymentToCustomer({
-            paymentIntentId: trip?.payments[0]?.paymentIntentId ?? ""
-        })
+        if (!payment) {
+            throw new ApiError(404, "Payment not found");
+        }
 
-        const paymentIntent =  await stripe.paymentIntents.create({
-            amount: amount * 100,
-            currency: "usd",
-            customer: stripeCustomerId,
-            payment_method: trip?.payments[0]?.stripePaymentMethodId ?? "",
-            off_session: true,
-            confirm: true,
-            capture_method: "manual",
-        })
- 
-        // const paymentIntent = await paymentService.authorizedPaymentWithSaveCardFromStripe({
-        //     tripId: isTripExist.id,
-        //     amount: isTripExist.totalCost * 0.2,
-        //     customerId: isTripExist.customerId,
-        //     paymentMethodId:paymentMethodId,
-        //     stripeCustomerId: isTripExist.customer.stripeCustomerId ?? "",
-        //     driverId: isTripExist.assignedDriverId ?? ""
-        // });
-        
-        // const res = await paymentService.capturePaymentRequestToStripe(paymentIntent.id);
- 
-        throw new ApiError(403, "You have to pay 20% of the total cost to cancel the trip");
-    }
+        // const penaltyAmount = isTripExist.totalCost * 0.2 * 100; // 20% in cents
+        const refundAmount = isTripExist.totalCost * 0.8 * 100; // 80% refund in cents 
 
-    const trip = await prisma.trip.delete({
-        where: { id }
-    });
-    return trip;
+        // Cancel the payment and refund 80%
+        if (payment.paymentIntentId) {
+            // await stripe.paymentIntents.cancel(payment.paymentIntentId); // maybe no need to cancel
+            await stripe.paymentIntents.capture(payment.paymentIntentId);
+
+            await stripe.refunds.create({
+                payment_intent: payment.paymentIntentId,
+                amount: refundAmount,
+                reason: "requested_by_customer"
+            });
+
+            // update the payment status on local database
+            await prisma.payment.update({
+                where:{paymentIntentId: payment?.paymentIntentId},
+                data: {
+                    status: PaymentStatus.Cancelled
+                }
+            })
+        }
+
+        // update the trip status to cancelled
+       await prisma.trip.update({
+            where: { id },
+            data: {
+                tripStatus: TripStatus.Cancelled,
+                cancellationReason: cancelReason || "Customer cancelled the trip"
+            }
+        });
+    } 
+
+    // update the driver trip application status to cancelled
+    await prisma.driverTripApplication.update({
+        where: { tripId_driverId: { tripId: isTripExist.id, driverId: isTripExist.assignedDriverId ?? "" } },
+        data: { status: DriverTripApplicationStatus.Cancelled }
+    })
+
+    return isTripExist; 
 }
+
+const tripSummary =  async()=>{
+
+    const totalTrips = await prisma.trip.count();
+    const completedTrips = await prisma.trip.count({
+        where: { tripStatus: TripStatus.Completed }
+    });
+
+    const cancelledTrips = await prisma.trip.count({
+        where: { tripStatus: TripStatus.Cancelled }
+    });
+
+    const confirmedTrips = await prisma.trip.count({
+        where: { tripStatus: TripStatus.Confirmed }
+    });
+
+    const pendingTrips = await prisma.trip.count({
+        where: { tripStatus: TripStatus.Pending }
+    });
+
+    const assignedTrips = await prisma.trip.count({
+        where: { tripStatus: TripStatus.Assigned }
+    });
+
+    return {
+        totalTrips,
+        completedTrips,
+        cancelledTrips,
+        confirmedTrips,
+        pendingTrips,
+        assignedTrips
+    }
+}
+
 
 export const TripService = {
     createTrip,
@@ -246,4 +288,5 @@ export const TripService = {
     getTrip,
     updateTrip,
     cancelTrip,
+    tripSummary,
 }

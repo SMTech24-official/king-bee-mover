@@ -9,7 +9,7 @@ import validateRequest from '../../middlewares/validateRequest';
 const router = express.Router();
 
 router.post('/',
-    // auth(UserRole.Customer),
+    auth(UserRole.Customer),
     fileUploader.uploadImage,
     (req: Request, res: Response, next: NextFunction) => {
         req.body = CustomerValidation.createCustomerSchema.parse(JSON.parse(req.body.data));
@@ -20,26 +20,26 @@ router.post('/',
 
 // get all customers
 router.get('/', 
-    // auth(UserRole.Admin), 
+    auth(UserRole.Admin), 
     CustomerController.getAllCustomer
 );
 
 // get a customer
 router.get('/:id', 
-    // auth(UserRole.Admin, UserRole.Customer), 
+    auth(UserRole.Admin, UserRole.Customer),
     CustomerController.getCustomer
 );
 
 // update a customer
 router.patch('/:id', 
-    // auth(UserRole.Admin, UserRole.Customer), 
+    auth(UserRole.Admin, UserRole.Customer), 
     validateRequest(CustomerValidation.updateCustomerSchema),
     CustomerController.updateCustomer
 );
 
 // delete a customer
 router.delete('/:id',
-    // auth(UserRole.Admin), 
+    auth(UserRole.Admin), 
     CustomerController.deleteCustomer
 ); 
 

@@ -92,8 +92,7 @@ const getSingleDriverTripApplication = async (id: string) => {
 }
 
 const assignDriverToTrip = async (id: string, payload: { tripId:string, status: DriverTripApplicationStatus }) => {
-
-    const isExit = await prisma.driverTripApplication.findUnique({
+     const isExit = await prisma.driverTripApplication.findUnique({
         where: { id }
     });  
      
@@ -106,7 +105,6 @@ const assignDriverToTrip = async (id: string, payload: { tripId:string, status: 
         where: { id: payload.tripId, tripStatus: TripStatus.Assigned }
     });
 
-    
     if (isAlreadyAssignedToThisTrip) {
         throw new ApiError(httpStatus.CONFLICT, "Driver already assigned to this trip");
     }

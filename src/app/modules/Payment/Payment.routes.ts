@@ -6,31 +6,54 @@ import auth from "../../middlewares/auth";
 import { UserRole } from "@prisma/client";
 const router = Router();
 
+
+
+router.get("/",
+    auth(UserRole.Admin), 
+    PaymentController.getAllPayments
+);
+
+router.get("/summary", 
+    auth(UserRole.Admin),
+    PaymentController.paymentSummary
+)
+
+router.get("/last-n-months", 
+    auth(UserRole.Admin),   
+    PaymentController.lastNMonthPayment
+)
+
+
+router.get("/:id", 
+    auth(UserRole.Admin),    
+    PaymentController.getPayment
+);
+
 router.post("/save-card", 
-    auth(UserRole.Customer, UserRole.Driver, UserRole.Admin),
+    auth(),
     validateRequest(PaymentValidation.saveCard), 
     PaymentController.saveCard
 );
 
 router.post("/authorize-payment", 
-    // auth(UserRole.Customer, UserRole.Driver, UserRole.Admin),
+    auth(UserRole.Customer),
     validateRequest(PaymentValidation.authorizePayment), 
     PaymentController.authorizePayment
 ); 
 
 router.post("/capture-payment", 
-    // auth(UserRole.Customer, UserRole.Driver, UserRole.Admin),
+    auth(),
     validateRequest(PaymentValidation.capturePayment), 
     PaymentController.capturePayment
 );
 
 router.get("/get-customer-saved-cards/:stripeCustomerId",
-    // auth(UserRole.Customer, UserRole.Driver, UserRole.Admin),
+    auth(),
     PaymentController.getCustomerSavedCards
 );
 
 router.post("/refund-payment", 
-    // auth(UserRole.Customer, UserRole.Driver, UserRole.Admin),
+    auth(),
     validateRequest(PaymentValidation.refundPayment), 
     PaymentController.refundPayment
 );

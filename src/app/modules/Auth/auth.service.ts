@@ -8,7 +8,7 @@ import emailSender from "./emailSender";
 import httpStatus from "http-status";
 import { User, UserRole } from "@prisma/client";
 import { removeObjectProperty } from "../../../helpars/utils";
-import { Twilio } from "twilio";
+import { twilioClient } from "../../../shared/twilio";
 
 // user login
 const loginUser = async (payload: { email: string; password: string, fcmToken: string }) => {
@@ -133,45 +133,53 @@ const changePassword = async (
 };
 
 // forgot password
-const forgotPassword = async (payload: { email: string }) => {
-  const userData = await prisma.user.findUniqueOrThrow({
+const forgotPassword = async (email: string) => {
+  const userData = await prisma.user.findUnique({
     where: {
-      email: payload.email,
+      email: email,
     },
   });
 
-  const resetPassToken = jwtHelpers.generateToken(
-    { email: userData.email, role: userData.role, id: userData.id },
-    config.jwt.reset_pass_secret as Secret,
-    config.jwt.reset_pass_token_expires_in as string
-  );
+  if(!userData){
+    throw new ApiError(httpStatus.NOT_FOUND, "user not found");
+  }
 
-  const resetPassLink =
-    config.reset_pass_link + `?userId=${userData.id}&token=${resetPassToken}`;
+  // Generate 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const OTP_EXPIRY_TIME = 2 * 60 * 1000; // 2 minutes
+  const expiry = new Date(Date.now() + OTP_EXPIRY_TIME);
 
+  const isStoredOtp = await prisma.oTP.upsert({
+    where: { email },
+    update: { otpCode: otp, expiry },
+    create: { email, otpCode: otp, expiry },
+  })
+
+  if (!isStoredOtp) {
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to store OTP in the database."
+    );
+  }
 
   await emailSender(
-    "Reset Your Password",
+    "Your OTP for Password Reset",
     userData.email,
     `
-     <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-          <p>Dear User</p>
-          
-          <p>We received a request to reset your password. Click the button below to reset your password:</p>
-          
-          <a href="${resetPassLink}" style="text-decoration: none;">
-            <button style="background-color: #007BFF; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">
-              Reset Password
-            </button>
-          </a>
-          
-          <p>If you did not request a password reset, please ignore this email or contact support if you have any concerns.</p>
-          
-          <p>Thank you,<br>Dream 2 Drive</p>
-</div>
-      `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+      <p>Dear User,</p>
+
+      <p>Your OTP for password reset is: <strong>${otp}</strong></p>
+
+      <p>This OTP will expire in ${(OTP_EXPIRY_TIME/120000)*2} minutes.</p>
+
+      <p>If you did not request this OTP, please ignore this email or contact support.</p>
+
+      <p>Thank you,<br>Dream 2 Drive</p>
+    </div>
+`
   );
-  return { message: "Reset password link sent via your email successfully" };
+  return { message: "OTP code sent via your email successfully" };
 };
 
 // reset password
@@ -207,12 +215,11 @@ const resetPassword = async (token: string, payload: { password: string }) => {
 };
 
 // send otp
-const sendOtp = async (phoneNumber: string) =>  {
-  const client = new Twilio(config.twilio.account_sid, config.twilio.auth_token);
+const sendOtp = async (phoneNumber: string) => {
   const OTP_EXPIRY_TIME = 2 * 60 * 1000;
 
   if (!phoneNumber) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Phone number is required");
+    throw new ApiError(httpStatus.NOT_FOUND, "Phone number is required to send OTP.");
   }
 
   // Generate 6-digit OTP
@@ -220,7 +227,7 @@ const sendOtp = async (phoneNumber: string) =>  {
 
   const expiry = new Date(Date.now() + OTP_EXPIRY_TIME);
 
-  // Store OTP in database using Prisma
+  // Store OTP in database using Prisma 
   const isStoredOtp = await prisma.oTP.upsert({
     where: { phoneNumber },
     update: { otpCode: otp, expiry },
@@ -235,11 +242,11 @@ const sendOtp = async (phoneNumber: string) =>  {
   }
 
   // Send OTP via Twilio SMS
-  const result = await client.messages.create({
+  const result = await twilioClient.messages.create({
     body: `Your OTP code is ${otp}. It will expire in 2 minutes.`,
     from: config.twilio.phone_number,
     to: phoneNumber,
-  });
+  })
 
   const formateRes = {
     body: result.body,
@@ -247,24 +254,34 @@ const sendOtp = async (phoneNumber: string) =>  {
     to: result.to,
     status: result.status,
     sid: result.sid,
-    dateCreated: result.dateCreated,
+    dateCreated: result.dateCreated
   };
   return formateRes;
 };
 
 // verify number
-const verifyOtp = async (payload: { phoneNumber: string, otp: string }) => {
-  const { phoneNumber, otp } = payload; 
-  if (!phoneNumber || !otp) {
+const verifyOtp = async (payload: { phoneNumber?: string, email?: string, otp: string }) => {
+
+  const { phoneNumber, email, otp } = payload; 
+  if ((!phoneNumber && !email) && !otp) {
     throw new ApiError(
       httpStatus.NOT_FOUND,
-      "Phone number and OTP are required"
+      "Phone number or email and OTP are required"
     );
   }
 
-  const storedOtp = await prisma.oTP.findUnique({
-    where: { phoneNumber },
-  });
+  let storedOtp: any;
+ 
+  if (phoneNumber) {
+    storedOtp = await prisma.oTP.findUnique({
+      where: { phoneNumber },
+    });
+
+  } else if (email) { 
+    storedOtp = await prisma.oTP.findUnique({
+      where:{email}
+    });
+  } 
 
   if (!storedOtp) {
     throw new ApiError(
@@ -287,7 +304,7 @@ const verifyOtp = async (payload: { phoneNumber: string, otp: string }) => {
     );
   }
 
-  return { phoneNumber };
+  return { phoneNumber, email };
 };
 
 export const AuthServices = {
@@ -299,3 +316,4 @@ export const AuthServices = {
   verifyOtp,
   sendOtp
 };
+

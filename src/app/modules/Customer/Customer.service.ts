@@ -17,7 +17,7 @@ const createCustomer = async (customerData: Customer, file: Express.Multer.File)
 
   if(!doesUserExist) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-  } 
+  }
 
   const isCustomerExist = !!await prisma.customer.findUnique({
     where: {
@@ -40,7 +40,7 @@ const createCustomer = async (customerData: Customer, file: Express.Multer.File)
   const customer = await prisma.customer.create({
     data: customerData,
   });
-
+  
   return customer;
 };
 
@@ -145,10 +145,7 @@ const deleteCustomer = async (id:string) => {
       },
     });
   });
-
 };
-
-
 
 export const CustomerService = {
   createCustomer,
