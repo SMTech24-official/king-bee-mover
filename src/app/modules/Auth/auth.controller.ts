@@ -102,8 +102,7 @@ const sendOtp = catchAsync(async (req: Request, res: Response) => {
 });
 
 const verifyOtp = catchAsync(async (req: Request, res: Response) => {
-  const payload = req.body; 
-  console.log("payload", payload);
+  const payload = req.body;  
   const result = await AuthServices.verifyOtp(payload);
 
   sendResponse(res, {

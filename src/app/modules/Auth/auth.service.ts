@@ -21,7 +21,7 @@ const loginUser = async (payload: { email: string; password: string, fcmToken: s
   if (!userData?.email) {
     throw new ApiError(
       httpStatus.NOT_FOUND,
-      "User not found! with this email " + payload.email
+      "User not found! with this email" + payload.email
     );
   }
 
@@ -46,6 +46,7 @@ const loginUser = async (payload: { email: string; password: string, fcmToken: s
       id: userData.id,
       email: userData.email,
       role: userData.role,
+      isVerified: userData.isVerified,
       fcmToken: userData.fcmToken || null,
     },
     config.jwt.jwt_secret as Secret,
@@ -67,7 +68,7 @@ const registerUser = async (payload: { email: string; password: string; phoneNum
   })
 
   if (user) {
-    throw new ApiError(httpStatus.BAD_REQUEST, `User already exists with this email ${payload.email} or phone number ${payload.phoneNumber}`);
+    throw new ApiError(httpStatus.BAD_REQUEST, `User already exists with this email ${payload.email} or phone number`);
   }
 
   const hashedPassword = await bcrypt.hash(payload.password, Number(config.bcrypt_salt_rounds));
@@ -90,7 +91,7 @@ const registerUser = async (payload: { email: string; password: string; phoneNum
     },
     config.jwt.jwt_secret as Secret,
     config.jwt.expires_in as string
-  );
+  ); 
   return { data: userDataExceptPassword, token: accessToken };
 }
 
@@ -149,17 +150,30 @@ const forgotPassword = async (email: string) => {
   const OTP_EXPIRY_TIME = 2 * 60 * 1000; // 2 minutes
   const expiry = new Date(Date.now() + OTP_EXPIRY_TIME);
 
-  const isStoredOtp = await prisma.oTP.upsert({
-    where: { email },
-    update: { otpCode: otp, expiry },
-    create: { email, otpCode: otp, expiry },
-  })
+ const isStoredOtp = await prisma.oTP.findFirst({
+  where: {  
+    email:userData.email
+    }
+ });
 
-  if (!isStoredOtp) {
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to store OTP in the database."
-    );
+  if(isStoredOtp) {
+    await prisma.oTP.update({
+      where: {
+        id: isStoredOtp.id
+      }, 
+      data:{
+        otpCode: otp,
+        expiry
+      }
+    }) 
+  } else {
+    await prisma.oTP.create({
+      data: {
+        email: userData.email,
+        otpCode: otp,
+        expiry
+      }
+    })
   }
 
   await emailSender(
@@ -177,8 +191,7 @@ const forgotPassword = async (email: string) => {
 
       <p>Thank you,<br>Dream 2 Drive</p>
     </div>
-`
-  );
+`);
   return { message: "OTP code sent via your email successfully" };
 };
 
@@ -228,17 +241,37 @@ const sendOtp = async (phoneNumber: string) => {
   const expiry = new Date(Date.now() + OTP_EXPIRY_TIME);
 
   // Store OTP in database using Prisma 
-  const isStoredOtp = await prisma.oTP.upsert({
-    where: { phoneNumber },
-    update: { otpCode: otp, expiry },
-    create: { phoneNumber, otpCode: otp, expiry },
-  });
+  // const isStoredOtp = await prisma.oTP.upsert({
+  //   where: { 
+  //    },
+  //   update: { otpCode: otp, expiry },
+  //   create: { phoneNumber, otpCode: otp, expiry },
+  // });
+  
+  const isStoredOtp =  await prisma.oTP.findFirst({
+    where: {
+      phoneNumber
+    }
+  })
 
-  if (!isStoredOtp) {
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to store OTP in the database."
-    );
+  if (isStoredOtp) {
+     await prisma.oTP.update({
+      where: {
+        id:isStoredOtp.id
+      },
+      data: {
+        otpCode: otp,
+        expiry
+      }
+     })
+  } else {
+    await prisma.oTP.create({
+      data: {
+        phoneNumber,
+        otpCode: otp,
+        expiry
+      }
+    })
   }
 
   // Send OTP via Twilio SMS
@@ -273,12 +306,12 @@ const verifyOtp = async (payload: { phoneNumber?: string, email?: string, otp: s
   let storedOtp: any;
  
   if (phoneNumber) {
-    storedOtp = await prisma.oTP.findUnique({
+    storedOtp = await prisma.oTP.findFirst({
       where: { phoneNumber },
     });
 
   } else if (email) { 
-    storedOtp = await prisma.oTP.findUnique({
+    storedOtp = await prisma.oTP.findFirst({
       where:{email}
     });
   } 
@@ -303,7 +336,7 @@ const verifyOtp = async (payload: { phoneNumber?: string, email?: string, otp: s
       "Invalid OTP. Please check the code and try again."
     );
   }
-
+  
   return { phoneNumber, email };
 };
 

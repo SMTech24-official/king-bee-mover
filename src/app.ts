@@ -28,7 +28,7 @@ app.get("/", (_req: Request, res: Response) => {
   res.send({
     success:true,
     statusCode: httpStatus.OK,
-    message: "Welcome to Rydleap API!",
+    message: "Welcome to king bee mover API!",
   });
 });
 

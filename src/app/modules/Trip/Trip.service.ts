@@ -281,7 +281,6 @@ const tripSummary =  async()=>{
     }
 }
 
-
 export const TripService = {
     createTrip,
     getAllTrip,

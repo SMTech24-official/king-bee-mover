@@ -14,17 +14,10 @@ const RegisterValidationSchema = z.object({
     }).min(8, {
       message: "Password must be at least 8 characters"
     }),
-    phoneNumber: z.string({
-      required_error: "Phone number is required"
-    }).min(10, {
-      message: "Phone number must be at least 10 characters"
-    }),
+    phoneNumber: z.string().optional(),
     role: z.enum([UserRole.Customer, UserRole.Driver, UserRole.Admin] as [string, ...string[]]),
-    fcmToken: z.string({
-      required_error: "FCM token is required"
-    }), 
+    fcmToken: z.string().optional(), 
   }),
-
 });
 
 // *!login user zod schema

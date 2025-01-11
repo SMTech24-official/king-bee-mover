@@ -310,7 +310,7 @@ const getAllPayments = async (option: IPaginationOptions, params: { status: Paym
   }
 
   const whereConditions: Prisma.PaymentWhereInput = { AND: andConditions };
-
+  
   const payments = await prisma.payment.findMany({
     where: whereConditions,
     skip,

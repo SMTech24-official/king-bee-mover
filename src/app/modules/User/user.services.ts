@@ -25,6 +25,7 @@ const createUserIntoDb = async (payload: User) => {
       );
     } 
   }
+
   const hashedPassword: string = await bcrypt.hash(
     payload.password,
     Number(config.bcrypt_salt_rounds)
@@ -140,7 +141,6 @@ const updateUser = async (id: string, payload: Partial<Omit<User, "id"| "created
   return result;
 };
 
- 
 export const userService = {
   createUserIntoDb,
   getUsersFromDb,

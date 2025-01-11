@@ -83,11 +83,12 @@ const getAllDriverTripApplication = async (options: IPaginationOptions, params: 
 const getSingleDriverTripApplication = async (id: string) => {
     const result = await prisma.driverTripApplication.findUnique({
         where: { id }
-        
     });
+
     if (!result) {
         throw new ApiError(httpStatus.NOT_FOUND, "Driver trip application not found");
     }
+
     return result;
 }
 
@@ -131,7 +132,7 @@ const assignDriverToTrip = async (id: string, payload: { tripId:string, status: 
                 assignedDriverId: res.driverId
             }
         });
-
+        
         return res;
     });
     return result;
